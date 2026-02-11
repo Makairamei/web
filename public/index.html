@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS Premium — Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app-login" class="login-container">
+        <div class="login-card">
+            <h1>🔐 CS Premium</h1>
+            <p>Repo Proxy Gateway — Admin Panel</p>
+            <div class="form-group"><label>Username</label><input type="text" id="login-user" placeholder="admin" autofocus></div>
+            <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
+            <button class="btn btn-primary btn-full" onclick="login()">🚀 Login</button>
+        </div>
+    </div>
+
+    <div id="app-main" class="hidden">
+        <div class="top-bar">
+            <div class="logo">⚡ CS Premium Gateway</div>
+            <div class="actions">
+                <button class="btn btn-ghost btn-sm" onclick="openPasswordModal()">🔑 Password</button>
+                <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+            </div>
+        </div>
+        <div class="tabs">
+            <div class="tab active" data-tab="dashboard">📊 Dashboard</div>
+            <div class="tab" data-tab="repos">📦 Source Repos</div>
+            <div class="tab" data-tab="keys">🔑 License Keys</div>
+            <div class="tab" data-tab="devices">🛡️ Devices & IPs</div>
+            <div class="tab" data-tab="logs">📋 Logs</div>
+            <div class="tab" data-tab="settings">⚙️ Settings</div>
+        </div>
+
+        <div class="content">
+            <!-- DASHBOARD -->
+            <div id="tab-dashboard" class="tab-content active">
+                <div class="stats-grid" id="stats-grid"></div>
+                <div class="section">
+                    <div class="section-title">📋 Aktivitas Terbaru</div>
+                    <div class="table-wrap">
+                        <table><thead><tr><th>Waktu</th><th>Key</th><th>Aksi</th><th>IP</th><th>Detail</th></tr></thead>
+                        <tbody id="recent-logs"></tbody></table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REPOS -->
+            <div id="tab-repos" class="tab-content">
+                <div class="section">
+                    <div class="section-header">
+                        <div><div class="section-title">📦 Source Repos</div><div class="section-subtitle">Tambahkan repo CloudStream untuk di-proxy</div></div>
+                        <div style="display:flex;gap:8px">
+                            <button class="btn btn-ghost btn-sm" onclick="refreshRepos()">🔄 Refresh Cache</button>
+                            <button class="btn btn-primary btn-sm" onclick="openAddRepoModal()">➕ Tambah Repo</button>
+                        </div>
+                    </div>
+                    <div id="repo-list"><p style="color:var(--muted);text-align:center;padding:20px">Loading...</p></div>
+                </div>
+            </div>
+
+            <!-- KEYS -->
+            <div id="tab-keys" class="tab-content">
+                <div class="section">
+                    <div class="section-header">
+                        <div><div class="section-title">🔑 License Keys</div><div class="section-subtitle">Klik key untuk lihat detail, edit, dan kelola devices</div></div>
+                        <button class="btn btn-primary btn-sm" onclick="openGenModal()">✨ Generate Key</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table><thead><tr><th>Key</th><th>Repo URL</th><th>Status</th><th>Durasi</th><th>Expired</th><th>Devices</th><th>Note</th><th>Aksi</th></tr></thead>
+                        <tbody id="keys-table"></tbody></table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DEVICES & IPs -->
+            <div id="tab-devices" class="tab-content">
+                <div class="section">
+                    <div class="section-header">
+                        <div><div class="section-title"><span class="pulse"></span> Online Devices</div><div class="section-subtitle">Devices yang aktif dalam 5 menit terakhir</div></div>
+                        <button class="btn btn-ghost btn-sm" onclick="loadDevicesTab()">🔄 Refresh</button>
+                    </div>
+                    <div id="online-list"><p style="color:var(--muted);text-align:center;padding:20px">Loading...</p></div>
+                </div>
+                <div class="section">
+                    <div class="section-header">
+                        <div><div class="section-title">🚫 Blocked IPs</div><div class="section-subtitle">IP yang diblokir tidak bisa akses repo manapun</div></div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-bottom:16px">
+                        <input type="text" id="block-ip-input" placeholder="Masukkan IP address" style="flex:1">
+                        <input type="text" id="block-ip-reason" placeholder="Alasan (opsional)" style="flex:1">
+                        <button class="btn btn-danger btn-sm" onclick="addBlockedIP()">🚫 Block IP</button>
+                    </div>
+                    <div id="blocked-list"></div>
+                </div>
+            </div>
+
+            <!-- LOGS -->
+            <div id="tab-logs" class="tab-content">
+                <div class="section">
+                    <div class="section-title">📋 Access Logs</div>
+                    <div class="table-wrap">
+                        <table><thead><tr><th>Waktu</th><th>Key</th><th>Aksi</th><th>IP</th><th>Detail</th></tr></thead>
+                        <tbody id="all-logs"></tbody></table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETTINGS -->
+            <div id="tab-settings" class="tab-content">
+                <div class="section">
+                    <div class="section-title">⚙️ Server Settings</div>
+                    <div class="section-subtitle" style="margin-top:4px;margin-bottom:16px">URL publik server — digunakan untuk generate link repo user</div>
+                    <div class="form-group"><label>Server URL</label><input type="text" id="setting-server-url" placeholder="http://your-vps-ip:3000"></div>
+                    <div class="form-group"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="setting-proxy" style="width:auto"> Proxy Downloads (route .cs3 melalui server)</label></div>
+                    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">⚠️ Pastikan URL bisa diakses dari internet</p>
+                    <button class="btn btn-primary" onclick="saveSettings()">💾 Simpan</button>
+                </div>
+                <div class="section">
+                    <div class="section-title">📖 Cara Pakai</div>
+                    <div style="font-size:13px;color:var(--muted);line-height:2;margin-top:8px">
+                        1. Tambah repo sumber di tab <strong>📦 Source Repos</strong><br>
+                        2. Generate key di tab <strong>🔑 License Keys</strong><br>
+                        3. Copy <strong>Repo URL</strong> dari key → berikan ke user<br>
+                        4. User paste URL di CloudStream → Settings → Extensions → Add Repository<br>
+                        5. Pantau devices dan IP di tab <strong>🛡️ Devices & IPs</strong><br>
+                        6. Key expired = URL mati otomatis ❌<br>
+                        7. Device melebihi batas = otomatis ditolak 🚫
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="modal-add-repo" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal">
+            <h2>➕ Tambah Source Repo</h2>
+            <p class="subtitle">Masukkan URL repo CloudStream extension</p>
+            <div class="form-group"><label>Nama Repo</label><input type="text" id="repo-name" placeholder="Contoh: ExtCloud"></div>
+            <div class="form-group"><label>URL</label><input type="text" id="repo-url" placeholder="https://github.com/duro92/ExtCloud"></div>
+            <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-add-repo')">Batal</button><button class="btn btn-primary" onclick="addRepo()">➕ Tambah</button></div>
+        </div>
+    </div>
+
+    <div id="modal-gen" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal">
+            <h2>✨ Generate License Key</h2>
+            <p class="subtitle">Buat key baru — setiap key mendapat URL repo unik</p>
+            <div class="form-group"><label>Durasi</label><select id="gen-duration">
+                <option value="7">7 Hari</option><option value="30" selected>30 Hari (1 Bulan)</option><option value="90">90 Hari (3 Bulan)</option><option value="180">180 Hari (6 Bulan)</option><option value="365">365 Hari (1 Tahun)</option>
+            </select></div>
+            <div class="form-group"><label>Max Devices per Key</label><select id="gen-maxdev">
+                <option value="1">1 Device</option><option value="2" selected>2 Devices</option><option value="3">3 Devices</option><option value="5">5 Devices</option><option value="10">10 Devices</option>
+            </select></div>
+            <div class="form-group"><label>Jumlah Key</label><select id="gen-count">
+                <option value="1" selected>1 Key</option><option value="5">5 Keys</option><option value="10">10 Keys</option><option value="25">25 Keys</option>
+            </select></div>
+            <div class="form-group"><label>Catatan (opsional)</label><input type="text" id="gen-note" placeholder="Nama user, dll"></div>
+            <div id="gen-result"></div>
+            <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-gen')">Batal</button><button class="btn btn-primary" onclick="genKey()">🔑 Generate</button></div>
+        </div>
+    </div>
+
+    <div id="modal-renew" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal">
+            <h2>⏰ Perpanjang Key</h2>
+            <div class="form-group"><label>Tambah Hari</label><select id="renew-days">
+                <option value="7">7 Hari</option><option value="30" selected>30 Hari</option><option value="90">90 Hari</option><option value="180">180 Hari</option><option value="365">365 Hari</option>
+            </select></div>
+            <input type="hidden" id="renew-id">
+            <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-renew')">Batal</button><button class="btn btn-primary" onclick="renewKey()">⏰ Perpanjang</button></div>
+        </div>
+    </div>
+
+    <div id="modal-password" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal">
+            <h2>🔑 Ganti Password</h2>
+            <div class="form-group"><label>Password Baru (min 6 karakter)</label><input type="password" id="new-pass" placeholder="••••••••"></div>
+            <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-password')">Batal</button><button class="btn btn-primary" onclick="changePass()">💾 Simpan</button></div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toasts"></div>
+    <script src="app.js"></script>
+</body>
+</html>

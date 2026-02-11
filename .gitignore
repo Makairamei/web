@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Database (contains license keys - DO NOT UPLOAD)
+*.db
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
