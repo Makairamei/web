@@ -1,19 +1,25 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CS Premium — Admin Panel</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div id="app-login" class="login-container">
         <div class="login-card">
-            <h1>🔐 CS Premium</h1>
+            <div class="login-logo">⚡</div>
+            <h1>CS Premium</h1>
             <p>Repo Proxy Gateway — Admin Panel</p>
-            <div class="form-group"><label>Username</label><input type="text" id="login-user" placeholder="admin" autofocus></div>
-            <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
+            <div class="form-group"><label>Username</label><input type="text" id="login-user" placeholder="admin"
+                    autofocus></div>
+            <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••"
+                    onkeydown="if(event.key==='Enter')login()"></div>
             <button class="btn btn-primary btn-full" onclick="login()">🚀 Login</button>
         </div>
     </div>
@@ -28,9 +34,10 @@
         </div>
         <div class="tabs">
             <div class="tab active" data-tab="dashboard">📊 Dashboard</div>
-            <div class="tab" data-tab="repos">📦 Source Repos</div>
+            <div class="tab" data-tab="repos">📦 Repos</div>
             <div class="tab" data-tab="keys">🔑 License Keys</div>
             <div class="tab" data-tab="devices">🛡️ Devices & IPs</div>
+            <div class="tab" data-tab="plugins">🔌 Plugin Activity</div>
             <div class="tab" data-tab="logs">📋 Logs</div>
             <div class="tab" data-tab="settings">⚙️ Settings</div>
         </div>
@@ -39,11 +46,36 @@
             <!-- DASHBOARD -->
             <div id="tab-dashboard" class="tab-content active">
                 <div class="stats-grid" id="stats-grid"></div>
-                <div class="section">
-                    <div class="section-title">📋 Aktivitas Terbaru</div>
-                    <div class="table-wrap">
-                        <table><thead><tr><th>Waktu</th><th>Key</th><th>Aksi</th><th>IP</th><th>Detail</th></tr></thead>
-                        <tbody id="recent-logs"></tbody></table>
+                <div class="grid-2">
+                    <div class="section">
+                        <div class="section-title">📋 Aktivitas Terbaru</div>
+                        <div class="table-wrap" style="max-height:400px;overflow-y:auto">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Waktu</th>
+                                        <th>Key</th>
+                                        <th>Aksi</th>
+                                        <th>Device</th>
+                                        <th>IP</th>
+                                        <th>Detail</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-logs"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="section-title">📱 Device Aktif</div>
+                        <div id="dashboard-devices" style="display:flex;flex-wrap:wrap;gap:8px">
+                            <p style="color:var(--muted);text-align:center;padding:20px;width:100%">Loading...</p>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="section-title">🔌 Plugin Popular</div>
+                        <div id="popular-plugins">
+                            <p style="color:var(--muted);text-align:center;padding:20px">Loading...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -52,13 +84,18 @@
             <div id="tab-repos" class="tab-content">
                 <div class="section">
                     <div class="section-header">
-                        <div><div class="section-title">📦 Source Repos</div><div class="section-subtitle">Tambahkan repo CloudStream untuk di-proxy</div></div>
+                        <div>
+                            <div class="section-title">📦 Source Repos</div>
+                            <div class="section-subtitle">Tambahkan repo CloudStream untuk di-proxy</div>
+                        </div>
                         <div style="display:flex;gap:8px">
                             <button class="btn btn-ghost btn-sm" onclick="refreshRepos()">🔄 Refresh Cache</button>
                             <button class="btn btn-primary btn-sm" onclick="openAddRepoModal()">➕ Tambah Repo</button>
                         </div>
                     </div>
-                    <div id="repo-list"><p style="color:var(--muted);text-align:center;padding:20px">Loading...</p></div>
+                    <div id="repo-list">
+                        <p style="color:var(--muted);text-align:center;padding:20px">Loading...</p>
+                    </div>
                 </div>
             </div>
 
@@ -66,28 +103,86 @@
             <div id="tab-keys" class="tab-content">
                 <div class="section">
                     <div class="section-header">
-                        <div><div class="section-title">🔑 License Keys</div><div class="section-subtitle">Klik key untuk lihat detail, edit, dan kelola devices</div></div>
-                        <button class="btn btn-primary btn-sm" onclick="openGenModal()">✨ Generate Key</button>
-                    </div>
-                    <div class="table-wrap">
-                        <table><thead><tr><th>Key</th><th>Repo URL</th><th>Status</th><th>Durasi</th><th>Expired</th><th>Devices</th><th>Note</th><th>Aksi</th></tr></thead>
-                        <tbody id="keys-table"></tbody></table>
+                        <div>
+                            <div
+                                style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
+                                <div>
+                                    <div class="section-title">🔑 License Keys</div>
+                                    <div class="section-subtitle">Klik key untuk lihat detail lengkap</div>
+                                </div>
+                                <div style="display:flex;gap:8px;align-items:center">
+                                    <div style="position:relative">
+                                        <input type="text" id="key-search" placeholder="🔍 Cari key, nama, note..."
+                                            style="padding:8px 30px 8px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:240px"
+                                            oninput="debounceKeySearch()">
+                                        <span id="search-clear-btn" onclick="clearSearch()"
+                                            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--muted);display:none;font-size:14px"
+                                            title="Hapus pencarian">✖️</span>
+                                    </div>
+                                    <button class="btn btn-ghost btn-sm" onclick="toggleTrashMode()" id="btn-trash-mode"
+                                        title="Lihat Sampah">🗑️ Trash</button>
+                                    <button class="btn btn-primary btn-sm" onclick="openGenModal()">✨ Generate</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="width:40px;text-align:center"><input type="checkbox"
+                                                id="select-all-keys" onclick="toggleSelectAll()"></th>
+                                        <th>Key</th>
+                                        <th>Repo URL</th>
+                                        <th>Status</th>
+                                        <th>Durasi / Sisa</th>
+                                        <th>Dibuat</th>
+                                        <th>Expired</th>
+                                        <th>Devices</th>
+                                        <th>Note</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="keys-table"></tbody>
+                            </table>
+                        </div>
+                        <div id="keys-pagination" style="display:flex;justify-content:center;gap:8px;margin-top:16px">
+                        </div>
+
+                        <!-- FLOATING ACTION BAR -->
+                        <div id="bulk-actions" class="floating-bar">
+                            <span id="selected-count" style="font-weight:600;margin-right:16px">0 Terpilih</span>
+                            <div style="display:flex;gap:8px">
+                                <button class="btn btn-sm btn-danger" onclick="confirmBulkDelete()">🗑️ Hapus</button>
+                                <button class="btn btn-sm btn-warning" onclick="promptBulkRenew()">⏰ Perpanjang</button>
+                                <button class="btn btn-sm btn-ghost" onclick="bulkRestore()" id="btn-bulk-restore"
+                                    style="display:none">♻️ Restore</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
 
             <!-- DEVICES & IPs -->
             <div id="tab-devices" class="tab-content">
                 <div class="section">
                     <div class="section-header">
-                        <div><div class="section-title"><span class="pulse"></span> Online Devices</div><div class="section-subtitle">Devices yang aktif dalam 5 menit terakhir</div></div>
+                        <div>
+                            <div class="section-title"><span class="pulse"></span> Online Devices</div>
+                            <div class="section-subtitle">Devices yang aktif dalam 5 menit terakhir</div>
+                        </div>
                         <button class="btn btn-ghost btn-sm" onclick="loadDevicesTab()">🔄 Refresh</button>
                     </div>
-                    <div id="online-list"><p style="color:var(--muted);text-align:center;padding:20px">Loading...</p></div>
+                    <div id="online-list">
+                        <p style="color:var(--muted);text-align:center;padding:20px">Loading...</p>
+                    </div>
                 </div>
                 <div class="section">
                     <div class="section-header">
-                        <div><div class="section-title">🚫 Blocked IPs</div><div class="section-subtitle">IP yang diblokir tidak bisa akses repo manapun</div></div>
+                        <div>
+                            <div class="section-title">🚫 Blocked IPs</div>
+                            <div class="section-subtitle">IP yang diblokir tidak bisa akses repo manapun</div>
+                        </div>
                     </div>
                     <div style="display:flex;gap:8px;margin-bottom:16px">
                         <input type="text" id="block-ip-input" placeholder="Masukkan IP address" style="flex:1">
@@ -98,13 +193,69 @@
                 </div>
             </div>
 
+            <!-- PLUGIN ACTIVITY -->
+            <div id="tab-plugins" class="tab-content">
+                <div class="grid-2">
+                    <div class="section">
+                        <div class="section-title">📊 Plugin Paling Populer</div>
+                        <div class="section-subtitle" style="margin-bottom:16px">Berdasarkan total aktivitas
+                            download &
+                            akses</div>
+                        <div id="plugin-stats-popular">
+                            <p style="color:var(--muted);text-align:center;padding:20px">Loading...</p>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="section-title">🕐 Aktivitas Plugin Terbaru</div>
+                        <div class="section-subtitle" style="margin-bottom:16px">30 aktivitas terakhir dari
+                            semua user
+                        </div>
+                        <div id="plugin-stats-recent">
+                            <p style="color:var(--muted);text-align:center;padding:20px">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- LOGS -->
             <div id="tab-logs" class="tab-content">
                 <div class="section">
-                    <div class="section-title">📋 Access Logs</div>
-                    <div class="table-wrap">
-                        <table><thead><tr><th>Waktu</th><th>Key</th><th>Aksi</th><th>IP</th><th>Detail</th></tr></thead>
-                        <tbody id="all-logs"></tbody></table>
+                    <div class="section-header">
+                        <div class="section-title">📋 Access Logs</div>
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                            <input type="text" id="log-search-input" placeholder="🔍 Cari key, IP, detail..."
+                                style="width:220px;padding:8px 12px;font-size:12px" oninput="debounceSearch()">
+                            <select id="log-action-filter" style="width:140px;padding:8px;font-size:12px"
+                                onchange="searchLogsFilter()">
+                                <option value="">Semua Aksi</option>
+                                <option value="VALID">✅ VALID</option>
+                                <option value="REPO_ACCESS">📦 REPO_ACCESS</option>
+                                <option value="DOWNLOAD">📥 DOWNLOAD</option>
+                                <option value="PLUGIN_OPEN">🔌 PLUGIN_OPEN</option>
+                                <option value="PLUGIN_CHECK">🔍 PLUGIN_CHECK</option>
+                                <option value="INVALID_KEY">❌ INVALID_KEY</option>
+                                <option value="REVOKED">🚫 REVOKED</option>
+                                <option value="EXPIRED">⏰ EXPIRED</option>
+                                <option value="BLOCKED_IP">🔴 BLOCKED_IP</option>
+                                <option value="MAX_DEVICES">📱 MAX_DEVICES</option>
+                                <option value="DEVICE_BLOCKED">📵 DEVICE_BLOCKED</option>
+                                <option value="DOWNLOAD_ERROR">⚠️ DOWNLOAD_ERROR</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-wrap" style="max-height:600px;overflow-y:auto">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Waktu</th>
+                                    <th>Key</th>
+                                    <th>Aksi</th>
+                                    <th>IP</th>
+                                    <th>Detail</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-logs"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -113,11 +264,30 @@
             <div id="tab-settings" class="tab-content">
                 <div class="section">
                     <div class="section-title">⚙️ Server Settings</div>
-                    <div class="section-subtitle" style="margin-top:4px;margin-bottom:16px">URL publik server — digunakan untuk generate link repo user</div>
-                    <div class="form-group"><label>Server URL</label><input type="text" id="setting-server-url" placeholder="http://your-vps-ip:3000"></div>
-                    <div class="form-group"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="setting-proxy" style="width:auto"> Proxy Downloads (route .cs3 melalui server)</label></div>
-                    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">⚠️ Pastikan URL bisa diakses dari internet</p>
+                    <div class="section-subtitle" style="margin-top:4px;margin-bottom:16px">URL publik server —
+                        digunakan untuk generate link repo user</div>
+                    <div class="form-group"><label>Server URL</label><input type="text" id="setting-server-url"
+                            placeholder="http://your-vps-ip:3000"></div>
+                    <div class="form-group"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input
+                                type="checkbox" id="setting-proxy" style="width:auto"> Proxy Downloads (route
+                            .cs3
+                            melalui server)</label></div>
+                    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">⚠️ Pastikan URL bisa diakses
+                        dari
+                        internet</p>
                     <button class="btn btn-primary" onclick="saveSettings()">💾 Simpan</button>
+                    <hr style="border:0;border-top:1px solid var(--border);margin:24px 0">
+                    <div class="section-title">📂 Database</div>
+                    <div class="section-subtitle" style="margin-bottom:16px">Download backup atau restore database dari
+                        file .db</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <button class="btn btn-ghost" onclick="downloadBackup()">📥 Download Backup</button>
+                        <button class="btn btn-warning" onclick="triggerUpload()">📤 Upload & Restore</button>
+                        <input type="file" id="db-upload-input" accept=".db" style="display:none"
+                            onchange="uploadRestore(this)">
+                    </div>
+                    <p style="font-size:11px;color:var(--muted);margin-top:8px">⚠️ Upload akan mengganti seluruh
+                        database. Server restart otomatis.</p>
                 </div>
                 <div class="section">
                     <div class="section-title">📖 Cara Pakai</div>
@@ -127,8 +297,9 @@
                         3. Copy <strong>Repo URL</strong> dari key → berikan ke user<br>
                         4. User paste URL di CloudStream → Settings → Extensions → Add Repository<br>
                         5. Pantau devices dan IP di tab <strong>🛡️ Devices & IPs</strong><br>
-                        6. Key expired = URL mati otomatis ❌<br>
-                        7. Device melebihi batas = otomatis ditolak 🚫
+                        6. Pantau plugin yg dipakai user di tab <strong>🔌 Plugin Activity</strong><br>
+                        7. Key expired = URL mati otomatis ❌<br>
+                        8. Device melebihi batas = otomatis ditolak 🚫
                     </div>
                 </div>
             </div>
@@ -140,9 +311,13 @@
         <div class="modal">
             <h2>➕ Tambah Source Repo</h2>
             <p class="subtitle">Masukkan URL repo CloudStream extension</p>
-            <div class="form-group"><label>Nama Repo</label><input type="text" id="repo-name" placeholder="Contoh: ExtCloud"></div>
-            <div class="form-group"><label>URL</label><input type="text" id="repo-url" placeholder="https://github.com/duro92/ExtCloud"></div>
-            <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-add-repo')">Batal</button><button class="btn btn-primary" onclick="addRepo()">➕ Tambah</button></div>
+            <div class="form-group"><label>Nama Repo</label><input type="text" id="repo-name"
+                    placeholder="Contoh: ExtCloud"></div>
+            <div class="form-group"><label>URL</label><input type="text" id="repo-url"
+                    placeholder="https://github.com/duro92/ExtCloud"></div>
+            <div class="modal-actions"><button class="btn btn-ghost"
+                    onclick="closeModal('modal-add-repo')">Batal</button><button class="btn btn-primary"
+                    onclick="addRepo()">➕ Tambah</button></div>
         </div>
     </div>
 
@@ -150,18 +325,55 @@
         <div class="modal">
             <h2>✨ Generate License Key</h2>
             <p class="subtitle">Buat key baru — setiap key mendapat URL repo unik</p>
-            <div class="form-group"><label>Durasi</label><select id="gen-duration">
-                <option value="7">7 Hari</option><option value="30" selected>30 Hari (1 Bulan)</option><option value="90">90 Hari (3 Bulan)</option><option value="180">180 Hari (6 Bulan)</option><option value="365">365 Hari (1 Tahun)</option>
-            </select></div>
-            <div class="form-group"><label>Max Devices per Key</label><select id="gen-maxdev">
-                <option value="1">1 Device</option><option value="2" selected>2 Devices</option><option value="3">3 Devices</option><option value="5">5 Devices</option><option value="10">10 Devices</option>
-            </select></div>
+
+            <div class="form-group"><label>Nama (Opsional)</label><input type="text" id="gen-name"
+                    placeholder="Nama User / Referensi"></div>
+
+            <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                <div class="form-group"><label>Durasi</label><select id="gen-duration">
+                        <option value="7">7 Hari</option>
+                        <option value="30" selected>30 Hari (1 Bulan)</option>
+                        <option value="90">90 Hari (3 Bulan)</option>
+                        <option value="180">180 Hari (6 Bulan)</option>
+                        <option value="365">365 Hari (1 Tahun)</option>
+                    </select></div>
+                <div class="form-group"><label>Max Devices</label><select id="gen-maxdev">
+                        <option value="1">1 Device</option>
+                        <option value="2" selected>2 Devices</option>
+                        <option value="3">3 Devices</option>
+                        <option value="5">5 Devices</option>
+                        <option value="10">10 Devices</option>
+                    </select></div>
+            </div>
+
             <div class="form-group"><label>Jumlah Key</label><select id="gen-count">
-                <option value="1" selected>1 Key</option><option value="5">5 Keys</option><option value="10">10 Keys</option><option value="25">25 Keys</option>
-            </select></div>
-            <div class="form-group"><label>Catatan (opsional)</label><input type="text" id="gen-note" placeholder="Nama user, dll"></div>
+                    <option value="1" selected>1 Key</option>
+                    <option value="5">5 Keys</option>
+                    <option value="10">10 Keys</option>
+                    <option value="25">25 Keys</option>
+                </select></div>
+
+            <div class="form-group"><label>Catatan Internal (Opsional)</label><textarea id="gen-note"
+                    placeholder="Catatan khusus admin..." style="resize:vertical;min-height:60px"></textarea>
+            </div>
+
             <div id="gen-result"></div>
-            <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-gen')">Batal</button><button class="btn btn-primary" onclick="genKey()">🔑 Generate</button></div>
+            <div class="modal-actions"><button class="btn btn-ghost"
+                    onclick="closeModal('modal-gen')">Batal</button><button class="btn btn-primary"
+                    onclick="genKey()">🔑 Generate</button></div>
+        </div>
+    </div>
+
+    <!-- CUSTOM CONFIRM MODAL -->
+    <div id="modal-confirm" class="modal-overlay" style="z-index:9999">
+        <div class="modal" style="max-width:400px;text-align:center">
+            <div style="font-size:48px;margin-bottom:16px">⚠️</div>
+            <h2 id="confirm-title" style="margin-bottom:8px">Konfirmasi</h2>
+            <p id="confirm-msg" style="color:var(--muted);margin-bottom:24px">Apakah Anda yakin?</p>
+            <div class="modal-actions" style="justify-content:center">
+                <button class="btn btn-ghost" onclick="closeConfirm(false)">Batal</button>
+                <button class="btn btn-danger" id="confirm-yes-btn">Ya, Hapus</button>
+            </div>
         </div>
     </div>
 
@@ -169,22 +381,58 @@
         <div class="modal">
             <h2>⏰ Perpanjang Key</h2>
             <div class="form-group"><label>Tambah Hari</label><select id="renew-days">
-                <option value="7">7 Hari</option><option value="30" selected>30 Hari</option><option value="90">90 Hari</option><option value="180">180 Hari</option><option value="365">365 Hari</option>
-            </select></div>
+                    <option value="7">7 Hari</option>
+                    <option value="30" selected>30 Hari</option>
+                    <option value="90">90 Hari</option>
+                    <option value="180">180 Hari</option>
+                    <option value="365">365 Hari</option>
+                </select></div>
             <input type="hidden" id="renew-id">
-            <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-renew')">Batal</button><button class="btn btn-primary" onclick="renewKey()">⏰ Perpanjang</button></div>
+            <div class="modal-actions"><button class="btn btn-ghost"
+                    onclick="closeModal('modal-renew')">Batal</button><button class="btn btn-primary"
+                    onclick="renewKey()">⏰ Perpanjang</button></div>
         </div>
     </div>
 
     <div id="modal-password" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
         <div class="modal">
             <h2>🔑 Ganti Password</h2>
-            <div class="form-group"><label>Password Baru (min 6 karakter)</label><input type="password" id="new-pass" placeholder="••••••••"></div>
-            <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('modal-password')">Batal</button><button class="btn btn-primary" onclick="changePass()">💾 Simpan</button></div>
+            <div class="form-group"><label>Password Baru (min 6 karakter)</label><input type="password" id="new-pass"
+                    placeholder="••••••••"></div>
+            <div class="modal-actions"><button class="btn btn-ghost"
+                    onclick="closeModal('modal-password')">Batal</button><button class="btn btn-primary"
+                    onclick="changePass()">💾 Simpan</button></div>
+        </div>
+    </div>
+
+    <!-- KEY DETAIL MODAL (full-screen) -->
+    <div id="modal-key-detail" class="modal-overlay" onclick="if(event.target===this)closeKeyDetail()">
+        <div class="modal modal-large">
+            <div class="modal-detail-header">
+                <h2 id="detail-modal-title">🔑 Detail License</h2>
+                <button class="btn btn-ghost btn-sm" onclick="closeKeyDetail()">✕ Tutup</button>
+            </div>
+            <div class="detail-tabs">
+                <div class="detail-tab active" data-dtab="overview" onclick="switchDetailTab('overview')">📊
+                    Overview
+                </div>
+                <div class="detail-tab" data-dtab="devices" onclick="switchDetailTab('devices')">📱 Devices
+                </div>
+                <div class="detail-tab" data-dtab="activity" onclick="switchDetailTab('activity')">📋 Activity
+                    Log</div>
+                <div class="detail-tab" data-dtab="plugin-usage" onclick="switchDetailTab('plugin-usage')">🔌
+                    Plugin
+                    Usage</div>
+                <div class="detail-tab" data-dtab="edit" onclick="switchDetailTab('edit')">✏️ Edit</div>
+            </div>
+            <div id="detail-modal-content">
+                <p style="color:var(--muted);padding:30px;text-align:center">Loading...</p>
+            </div>
         </div>
     </div>
 
     <div class="toast-container" id="toasts"></div>
-    <script src="app.js"></script>
+    <script src="app.js?v=3"></script>
 </body>
+
 </html>
