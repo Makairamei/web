@@ -217,6 +217,11 @@ app.get('/api/check-ip', (req, res) => {
     const ua = req.headers['user-agent'] || '';
     const pluginName = req.query.plugin || null;
 
+    // DEBUG LOG
+    if (pluginName || req.query.action) {
+        console.log(`[DEBUG] check-ip: IP=${ip} Plugin=${pluginName} Action=${req.query.action || 'OPEN'} Data=${req.query.data}`);
+    }
+
     const session = getIpSession(ip);
 
     if (!session) {
@@ -249,7 +254,7 @@ app.get('/api/check-ip', (req, res) => {
         // Filter out routine checks if named 'check'
         if (action !== 'check') {
             const actionUpper = action.toUpperCase();
-            db.logPluginActivity(session.key, pluginName, actionUpper, ip, deviceId);
+            db.logPluginActivity(session.key, pluginName, actionUpper, ip, deviceId, data);
 
             // Format details
             let details = pluginName;

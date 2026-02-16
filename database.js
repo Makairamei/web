@@ -588,9 +588,9 @@ function searchLogs({ query = '', action = '', limit = 100 } = {}) {
 }
 
 // ============== PLUGIN ACTIVITY ==============
-function logPluginActivity(key, pluginName, action, ip = '', deviceId = '') {
-    db.run("INSERT INTO plugin_activity (license_key, plugin_name, action, ip_address, device_id) VALUES (?, ?, ?, ?, ?)",
-        [key, pluginName, action, ip, deviceId]);
+function logPluginActivity(key, pluginName, action, ip = '', deviceId = '', data = '') {
+    db.run("INSERT INTO plugin_activity (license_key, plugin_name, action, ip_address, device_id, data) VALUES (?, ?, ?, ?, ?, ?)",
+        [key, pluginName, action, ip, deviceId, data]);
     saveDb();
 }
 
@@ -603,6 +603,9 @@ function getPluginStats() {
         SELECT plugin_name, COUNT(*) as total, 
         SUM(CASE WHEN action='DOWNLOAD' THEN 1 ELSE 0 END) as downloads,
         SUM(CASE WHEN action='OPEN' THEN 1 ELSE 0 END) as opens,
+        SUM(CASE WHEN action='SEARCH' THEN 1 ELSE 0 END) as searches,
+        SUM(CASE WHEN action='LOAD' THEN 1 ELSE 0 END) as loads,
+        SUM(CASE WHEN action='PLAY' THEN 1 ELSE 0 END) as plays,
         COUNT(DISTINCT license_key) as unique_users
         FROM plugin_activity GROUP BY plugin_name ORDER BY total DESC LIMIT 20
     `);

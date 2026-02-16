@@ -67,7 +67,8 @@ function enterDashboard() {
         const active = document.querySelector('.tab.active');
         if (active && active.dataset.tab === 'dashboard') loadDashboard();
         if (active && active.dataset.tab === 'devices') loadDevicesTab();
-    }, 30000);
+        if (active && active.dataset.tab === 'plugins') loadPluginStats(); // Auto-refresh plugins tab
+    }, 5000); // Faster refresh for realtime feel
 }
 
 function logout() {
@@ -869,7 +870,7 @@ async function loadPluginStats() {
                     </div>
                     <div class="plugin-bar-track">
                         <div class="plugin-bar-fill" style="width:${Math.max(5, (p.total / maxTotal) * 100)}%">
-                            <span class="plugin-bar-dl">📥 ${p.downloads} · 🔌 ${p.opens}</span>
+                            <span class="plugin-bar-dl">📥${p.downloads} 🔌${p.opens} 🔍${p.searches || 0} ⏳${p.loads || 0} ▶️${p.plays || 0}</span>
                         </div>
                     </div>
                 </div>
@@ -882,16 +883,18 @@ async function loadPluginStats() {
         if (stats.recent && stats.recent.length > 0) {
             document.getElementById('plugin-stats-recent').innerHTML = `
             <div class="table-wrap" style="max-height:400px;overflow-y:auto">
-                <table><thead><tr><th>Waktu</th><th>Plugin</th><th>Aksi</th><th>Key</th><th>User</th><th>Device</th><th>IP</th></tr></thead>
+                <table><thead><tr><th>Waktu</th><th>Plugin</th><th>Aksi</th><th>Detail</th><th>Key</th><th>User</th><th>Device</th><th>IP</th></tr></thead>
                 <tbody>${stats.recent.map(r => {
                 const keyParts = (r.license_key || '').split('-');
                 const keyLabel = keyParts.length >= 2 ? `${keyParts[0]}-${keyParts[1]}` : '-';
                 const userName = r.license_name || r.license_note || '-';
                 const devName = r.device_name && r.device_name !== 'Unknown' ? r.device_name : '-';
+                const detail = r.data ? r.data : '-';
                 return `<tr>
                     <td style="font-size:11px;color:var(--muted)">${fmtDate(r.created_at)}</td>
                     <td style="font-weight:600">🔌 ${esc(r.plugin_name)}</td>
                     <td><span class="badge ${r.action === 'DOWNLOAD' ? 'badge-purple' : 'badge-cyan'}">${r.action}</span></td>
+                    <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(detail)}">${esc(detail)}</td>
                     <td><span class="badge badge-cyan" style="font-size:10px">${keyLabel}</span></td>
                     <td style="font-size:12px">${esc(userName)}</td>
                     <td style="font-size:12px;font-weight:600">${esc(devName)}</td>
@@ -1035,6 +1038,7 @@ function fmtDate(d) {
 function actionBadge(a) {
     const map = {
         'VALID': 'badge-green', 'REPO_ACCESS': 'badge-green', 'DOWNLOAD': 'badge-purple', 'PLUGIN_OPEN': 'badge-cyan', 'PLUGIN_CHECK': 'badge-cyan',
+        'SEARCH': 'badge-blue', 'LOAD': 'badge-yellow', 'PLAY': 'badge-green',
         'DOWNLOAD_ERROR': 'badge-yellow', 'MAX_DEVICES': 'badge-yellow', 'BLOCKED_IP': 'badge-red', 'DEVICE_BLOCKED': 'badge-red',
         'REVOKED': 'badge-red', 'EXPIRED': 'badge-yellow', 'INVALID_KEY': 'badge-red'
     };
