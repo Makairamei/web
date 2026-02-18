@@ -311,6 +311,32 @@ app.get('/api/check-ip', rateLimit(60000, 120), (req, res) => {
 });
 
 // ============================================================
+// PUBLIC API — Auto-discover license key by IP session
+// ============================================================
+
+app.get('/api/key-by-ip', rateLimit(60000, 30), (req, res) => {
+    try {
+        const ip = getClientIP(req);
+        if (db.isIPBlocked(ip)) {
+            return res.json({ status: 'error', message: 'IP blocked' });
+        }
+        const session = getIPSession(ip);
+        if (!session) {
+            return res.json({ status: 'error', message: 'No active session' });
+        }
+        const lic = db.getLicenseByKey(session.key);
+        if (!lic || lic.status !== 'active') {
+            ipSessions.delete(ip);
+            return res.json({ status: 'error', message: 'License inactive' });
+        }
+        res.json({ status: 'active', key: session.key, expires_at: lic.expires_at });
+    } catch (e) {
+        console.error('Key-by-IP error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// ============================================================
 // PUBLIC API — Plugin Tracking
 // ============================================================
 
