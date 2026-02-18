@@ -1,9 +1,73 @@
+// ============================================
+// LUCIDE SVG ICON SYSTEM
+// ============================================
+const ICONS = {
+    key: '<path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
+    'key-square': '<path d="M12.4 2.7c.9-.9 2.5-.9 3.4 0l5.5 5.5c.9.9.9 2.5 0 3.4l-3.7 3.7c-.9.9-2.5.9-3.4 0L8.7 9.8c-.9-.9-.9-2.5 0-3.4z"/><path d="m14 7 3 3"/><path d="m9.4 16.6-4.6 4.6"/><path d="m11.8 14.2-4.6 4.6"/>',
+    monitor: '<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
+    smartphone: '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+    ban: '<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>',
+    download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+    'alert-triangle': '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+    activity: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+    plug: '<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 0 1-6 6v0a6 6 0 0 1-6-6V8z"/>',
+    database: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/>',
+    'file-text': '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+    settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9"/>',
+    copy: '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+    trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+    'rotate-ccw': '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
+    save: '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>',
+    edit: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
+    tag: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
+    globe: '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+    calendar: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+    cpu: '<rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/>',
+    x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    check: '<polyline points="20 6 9 17 4 12"/>',
+    'check-circle': '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+    'bar-chart': '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+    search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+    play: '<polygon points="5 3 19 12 5 21 5 3"/>',
+    loader: '<line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>',
+    zap: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+    flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+    folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
+    refresh: '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
+};
+
+function icon(name, size = 16, cls = '') {
+    const paths = ICONS[name] || ICONS.zap;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${cls}" style="display:inline-block;vertical-align:middle;flex-shrink:0">${paths}</svg>`;
+}
+
 const API = '';
 let TOKEN = localStorage.getItem('cs_admin_token') || '';
 let refreshInterval = null;
 let searchDebounce = null;
 let currentDetailId = null;
 let currentDetailData = null;
+
+// ============================================
+// THEME TOGGLE
+// ============================================
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('cs_theme', theme);
+}
+
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+// Auto-apply saved theme on load
+(function () {
+    const saved = localStorage.getItem('cs_theme') || 'light';
+    applyTheme(saved);
+})();
 
 // Toast
 function toast(msg, type = 'info') {
@@ -97,15 +161,15 @@ async function loadDashboard() {
     try {
         const stats = await api('/api/admin/stats');
         document.getElementById('stats-grid').innerHTML = `
-            <div class="stat-card"><div class="stat-icon green">🔑</div><div class="stat-body"><div class="label">Active Keys</div><div class="value green">${stats.active_keys}</div></div></div>
-            <div class="stat-card"><div class="stat-icon purple">🔑</div><div class="stat-body"><div class="label">Total Keys</div><div class="value purple">${stats.total_keys}</div></div></div>
-            <div class="stat-card"><div class="stat-icon cyan">📱</div><div class="stat-body"><div class="label">Online Devices</div><div class="value cyan"><span class="pulse"></span>${stats.online_devices}</div></div></div>
-            <div class="stat-card"><div class="stat-icon yellow">⏰</div><div class="stat-body"><div class="label">Expired</div><div class="value yellow">${stats.expired_keys}</div></div></div>
-            <div class="stat-card"><div class="stat-icon red">🚫</div><div class="stat-body"><div class="label">Revoked</div><div class="value red">${stats.revoked_keys}</div></div></div>
-            <div class="stat-card"><div class="stat-icon purple">📥</div><div class="stat-body"><div class="label">Downloads 24h</div><div class="value purple">${stats.downloads_today}</div></div></div>
-            <div class="stat-card"><div class="stat-icon red">⚠️</div><div class="stat-body"><div class="label">Errors 24h</div><div class="value red">${stats.errors_today}</div></div></div>
-            <div class="stat-card"><div class="stat-icon cyan">🔌</div><div class="stat-body"><div class="label">Plugin Acts 24h</div><div class="value cyan">${stats.plugin_activity_24h}</div></div></div>
-            <div class="stat-card"><div class="stat-icon purple">📦</div><div class="stat-body"><div class="label">Source Repos</div><div class="value purple">${stats.active_repos}/${stats.total_repos}</div></div></div>
+            <div class="stat-card"><div class="stat-icon green">${icon('key', 20)}</div><div class="stat-body"><div class="label">Active Keys</div><div class="value green">${stats.active_keys}</div></div></div>
+            <div class="stat-card"><div class="stat-icon purple">${icon('key-square', 20)}</div><div class="stat-body"><div class="label">Total Keys</div><div class="value purple">${stats.total_keys}</div></div></div>
+            <div class="stat-card"><div class="stat-icon cyan">${icon('monitor', 20)}</div><div class="stat-body"><div class="label">Online Devices</div><div class="value cyan"><span class="pulse"></span>${stats.online_devices}</div></div></div>
+            <div class="stat-card"><div class="stat-icon yellow">${icon('clock', 20)}</div><div class="stat-body"><div class="label">Expired</div><div class="value yellow">${stats.expired_keys}</div></div></div>
+            <div class="stat-card"><div class="stat-icon red">${icon('ban', 20)}</div><div class="stat-body"><div class="label">Revoked</div><div class="value red">${stats.revoked_keys}</div></div></div>
+            <div class="stat-card"><div class="stat-icon purple">${icon('download', 20)}</div><div class="stat-body"><div class="label">Downloads 24h</div><div class="value purple">${stats.downloads_today}</div></div></div>
+            <div class="stat-card"><div class="stat-icon red">${icon('alert-triangle', 20)}</div><div class="stat-body"><div class="label">Errors 24h</div><div class="value red">${stats.errors_today}</div></div></div>
+            <div class="stat-card"><div class="stat-icon cyan">${icon('plug', 20)}</div><div class="stat-body"><div class="label">Plugin Acts 24h</div><div class="value cyan">${stats.plugin_activity_24h}</div></div></div>
+            <div class="stat-card"><div class="stat-icon purple">${icon('database', 20)}</div><div class="stat-body"><div class="label">Source Repos</div><div class="value purple">${stats.active_repos}/${stats.total_repos}</div></div></div>
         `;
         const logs = await api('/api/admin/logs?limit=15');
         document.getElementById('recent-logs').innerHTML = logs.map(l => {
@@ -161,12 +225,12 @@ async function loadDashboard() {
                 document.getElementById('popular-plugins').innerHTML = ps.popular.slice(0, 8).map(p => `
                     <div class="plugin-bar-item">
                         <div class="plugin-bar-header">
-                            <span class="plugin-bar-name">🔌 ${esc(p.plugin_name)}</span>
-                            <span class="plugin-bar-count">${p.total} akses · ${p.unique_users} user</span>
+                            <span class="plugin-bar-name">${icon('plug', 14)} ${esc(p.plugin_name)}</span>
+                            <span class="plugin-bar-count">${p.total} access · ${p.unique_users} users</span>
                         </div>
                         <div class="plugin-bar-track">
                             <div class="plugin-bar-fill" style="width:${Math.max(5, (p.total / maxTotal) * 100)}%">
-                                <span class="plugin-bar-dl">📥 ${p.downloads}</span>
+                                <span class="plugin-bar-dl">${icon('download', 12)} ${p.downloads}</span>
                             </div>
                         </div>
                     </div>
@@ -187,13 +251,13 @@ async function loadRepos() {
     try {
         const repos = await api('/api/admin/repos');
         if (repos.length === 0) {
-            document.getElementById('repo-list').innerHTML = '<p style="color:var(--muted);text-align:center;padding:30px">Belum ada repo. Klik ➕ Tambah Repo.</p>';
+            document.getElementById('repo-list').innerHTML = '<p style="color:var(--muted);text-align:center;padding:30px">No repos added yet. Click Add Repo to get started.</p>';
             return;
         }
         document.getElementById('repo-list').innerHTML = repos.map(r => `
             <div class="repo-item">
                 <div class="repo-info">
-                    <div class="repo-name">${r.is_active ? '🟢' : '🔴'} ${esc(r.name)}</div>
+                    <div class="repo-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${r.is_active ? 'var(--success)' : 'var(--danger)'}"></span> ${esc(r.name)}</div>
                     <div class="repo-url">${esc(r.url)}</div>
                 </div>
                 <div class="repo-actions">
@@ -248,11 +312,11 @@ function toggleTrashMode() {
     const btn = document.getElementById('btn-trash-mode');
     if (isTrashMode) {
         btn.classList.add('trash-active');
-        btn.innerHTML = '📂 Active Keys';
+        btn.innerHTML = `${icon('folder', 14)} Active Keys`;
         document.getElementById('btn-bulk-restore').style.display = 'block'; // Show restore in trash
     } else {
         btn.classList.remove('trash-active');
-        btn.innerHTML = '🗑️ Trash';
+        btn.innerHTML = `${icon('trash', 14)} Trash`;
         document.getElementById('btn-bulk-restore').style.display = 'none';
     }
     selectedKeys.clear();
@@ -307,7 +371,7 @@ async function loadKeys(page = 1) {
                         ${k.online_count > 0 ? '<span class="pulse"></span>' : ''} 
                         ${k.name ? `<div style="font-weight:600;color:var(--text);margin-bottom:2px">${esc(k.name)}</div><div style="font-family:monospace;font-size:11px;color:var(--muted)">${k.license_key}</div>` : `<span style="font-family:monospace;font-weight:600">${k.license_key}</span>`}
                     </td>
-                    <td><div class="url-box"><span class="url-text">${esc(k.repo_url)}</span><button class="copy-btn" data-url="${esc(k.repo_url)}" onclick="event.stopPropagation();copyUrl(this)">📋</button></div></td>
+                    <td><div class="url-box"><span class="url-text">${esc(k.repo_url)}</span><button class="copy-btn" data-url="${esc(k.repo_url)}" onclick="event.stopPropagation();copyUrl(this)">${icon('copy', 12)}</button></div></td>
                     <td><span class="badge ${badge}">${status}</span></td>
                     <td><div style="font-weight:600">${durationText}</div><div style="font-size:11px;color:var(--muted)">Total: ${k.duration_days}d</div></td>
                     <td style="font-size:12px"><div>${fmtDate(k.created_at).split(' ')[0]}</div></td>
@@ -317,11 +381,11 @@ async function loadKeys(page = 1) {
                     <td>
                         <div style="display:flex;gap:4px;flex-wrap:wrap" onclick="event.stopPropagation()">
                             ${isTrashMode ?
-                        `<button class="btn btn-xs btn-success" onclick="restoreKey(${k.id})">♻️</button>
-                                 <button class="btn btn-xs btn-danger" onclick="forceDeleteKey(${k.id})">🔥</button>` :
-                        `${status === 'ACTIVE' ? `<button class="btn btn-xs btn-warning" onclick="revokeKey(${k.id})">Revoke</button>` : `<button class="btn btn-xs btn-success" onclick="activateKey(${k.id})">Aktifkan</button>`}
-                                 <button class="btn btn-xs btn-ghost" onclick="openRenewModal(${k.id})">⏰</button>
-                                 <button class="btn btn-xs btn-danger" onclick="confirmDeleteKey(${k.id})">🗑️</button>`
+                        `<button class="btn btn-xs btn-success" onclick="restoreKey(${k.id})">${icon('rotate-ccw', 12)} Restore</button>
+                                 <button class="btn btn-xs btn-danger" onclick="forceDeleteKey(${k.id})">${icon('flame', 12)}</button>` :
+                        `${status === 'ACTIVE' ? `<button class="btn btn-xs btn-warning" onclick="revokeKey(${k.id})">Revoke</button>` : `<button class="btn btn-xs btn-success" onclick="activateKey(${k.id})">Activate</button>`}
+                                 <button class="btn btn-xs btn-ghost" onclick="openRenewModal(${k.id})">${icon('clock', 12)}</button>
+                                 <button class="btn btn-xs btn-danger" onclick="confirmDeleteKey(${k.id})">${icon('trash', 12)}</button>`
                     }
                         </div>
                     </td>
@@ -453,7 +517,7 @@ function renderPagination(totalPages, current) {
     let html = '';
 
     // Prev
-    html += `<button class="btn btn-sm ${current === 1 ? 'btn-ghost' : 'btn-secondary'}" ${current === 1 ? 'disabled' : `onclick="loadKeys(${current - 1})"`}>◀ Prev</button>`;
+    html += `<button class="btn btn-sm ${current === 1 ? 'btn-ghost' : 'btn-secondary'}" ${current === 1 ? 'disabled' : `onclick="loadKeys(${current - 1})"`}>Prev</button>`;
 
     // Page Numbers (Show max 5)
     let start = Math.max(1, current - 2);
@@ -465,7 +529,7 @@ function renderPagination(totalPages, current) {
     }
 
     // Next
-    html += `<button class="btn btn-sm ${current === totalPages ? 'btn-ghost' : 'btn-secondary'}" ${current === totalPages ? 'disabled' : `onclick="loadKeys(${current + 1})"`}>Next ▶</button>`;
+    html += `<button class="btn btn-sm ${current === totalPages ? 'btn-ghost' : 'btn-secondary'}" ${current === totalPages ? 'disabled' : `onclick="loadKeys(${current + 1})"`}>Next</button>`;
 
     container.innerHTML = html;
 }
@@ -485,7 +549,7 @@ async function openKeyDetail(id) {
     try {
         const d = await api(`/api/admin/keys/${id}/details`);
         currentDetailData = d;
-        document.getElementById('detail-modal-title').textContent = `🔑 ${d.license_key}`;
+        document.getElementById('detail-modal-title').innerHTML = `${icon('key', 18)} ${d.license_key}`;
         renderDetailTab('overview');
     } catch (e) {
         document.getElementById('detail-modal-content').innerHTML = `<p style="color:var(--danger);padding:30px;text-align:center">${e.message}</p>`;
@@ -536,17 +600,17 @@ function renderDetailTab(tab) {
                 </div>
             </div>
             <div class="overview-info-grid">
-                <div class="overview-info-row"><span class="overview-info-label">🔑 License Key</span><span class="overview-info-value mono">${d.license_key} <button class="btn btn-xs btn-ghost" onclick="copyText('${d.license_key}')">📋</button></span></div>
-                <div class="overview-info-row"><span class="overview-info-label">🌐 Repo URL</span><span class="overview-info-value mono" style="font-size:11px">${esc(d.repo_url)} <button class="btn btn-xs btn-ghost" onclick="copyText('${esc(d.repo_url)}')">📋</button></span></div>
-                <div class="overview-info-row"><span class="overview-info-label">📅 Dibuat</span><span class="overview-info-value">${fmtDate(d.created_at)}</span></div>
-                <div class="overview-info-row"><span class="overview-info-label">⏰ Expired</span><span class="overview-info-value">${new Date(d.expired_at).toLocaleString('id')}</span></div>
-                <div class="overview-info-row"><span class="overview-info-label">📝 Catatan</span><span class="overview-info-value">${esc(d.note || '-')}</span></div>
-                <div class="overview-info-row"><span class="overview-info-label">⏱️ Durasi</span><span class="overview-info-value">${d.duration_days} hari</span></div>
+                <div class="overview-info-row"><span class="overview-info-label">${icon('key', 14)} License Key</span><span class="overview-info-value mono">${d.license_key} <button class="btn btn-xs btn-ghost" onclick="copyText('${d.license_key}')">${icon('copy', 12)}</button></span></div>
+                <div class="overview-info-row"><span class="overview-info-label">${icon('globe', 14)} Repo URL</span><span class="overview-info-value mono" style="font-size:11px">${esc(d.repo_url)} <button class="btn btn-xs btn-ghost" onclick="copyText('${esc(d.repo_url)}')">${icon('copy', 12)}</button></span></div>
+                <div class="overview-info-row"><span class="overview-info-label">${icon('calendar', 14)} Created</span><span class="overview-info-value">${fmtDate(d.created_at)}</span></div>
+                <div class="overview-info-row"><span class="overview-info-label">${icon('clock', 14)} Expires</span><span class="overview-info-value">${new Date(d.expired_at).toLocaleString('id')}</span></div>
+                <div class="overview-info-row"><span class="overview-info-label">${icon('file-text', 14)} Note</span><span class="overview-info-value">${esc(d.note || '-')}</span></div>
+                <div class="overview-info-row"><span class="overview-info-label">${icon('clock', 14)} Duration</span><span class="overview-info-value">${d.duration_days} days</span></div>
             </div>
             ${d.plugin_usage && d.plugin_usage.length > 0 ? `
             <div style="margin-top:16px">
-                <h4 style="margin-bottom:8px">🔌 Plugin Terakhir Diakses</h4>
-                <div class="plugin-chips">${d.plugin_usage.slice(0, 5).map(p => `<span class="plugin-chip"><span class="plugin-chip-icon">${p.action === 'DOWNLOAD' ? '📥' : '🔌'}</span>${esc(p.plugin_name)}<span class="plugin-chip-count">${p.count}x</span></span>`).join('')}</div>
+                <h4 style="margin-bottom:8px">${icon('plug', 16)} Recently Accessed Plugins</h4>
+                <div class="plugin-chips">${d.plugin_usage.slice(0, 5).map(p => `<span class="plugin-chip"><span class="plugin-chip-icon">${p.action === 'DOWNLOAD' ? icon('download', 14) : icon('plug', 14)}</span>${esc(p.plugin_name)}<span class="plugin-chip-count">${p.count}x</span></span>`).join('')}</div>
             </div>` : ''}
         </div>`;
             break;
@@ -554,7 +618,7 @@ function renderDetailTab(tab) {
         case 'devices':
             container.innerHTML = `
         <div class="detail-devices">
-            <h4>📱 Devices Terhubung (${d.device_count}/${d.max_devices})</h4>
+            <h4>${icon('smartphone', 16)} Connected Devices (${d.device_count}/${d.max_devices})</h4>
             ${d.devices.length === 0 ? '<p style="color:var(--muted);font-size:13px;padding:20px;text-align:center">Belum ada device terhubung</p>' :
                     d.devices.map(dev => {
                         const online = (new Date() - new Date(dev.last_seen)) < 5 * 60 * 1000;
@@ -569,9 +633,9 @@ function renderDetailTab(tab) {
                                 ${dev.is_blocked ? '<span class="badge badge-red">BLOCKED</span>' : ''}
                             </div>
                             <div class="device-meta-row">
-                                ${dev.device_model ? `<span class="device-meta-tag">📱 ${esc(dev.device_model)}</span>` : ''}
-                                ${dev.os_info ? `<span class="device-meta-tag">💻 ${esc(dev.os_info)}</span>` : ''}
-                                <span class="device-meta-tag">🌐 ${dev.ip_address}</span>
+                                ${dev.device_model ? `<span class="device-meta-tag">${icon('smartphone', 12)} ${esc(dev.device_model)}</span>` : ''}
+                                ${dev.os_info ? `<span class="device-meta-tag">${icon('monitor', 12)} ${esc(dev.os_info)}</span>` : ''}
+                                <span class="device-meta-tag">${icon('globe', 12)} ${dev.ip_address}</span>
                             </div>
                             <div class="device-meta-row">
                                 <span class="device-meta-tag dim">ID: ${dev.device_id}</span>
@@ -581,10 +645,10 @@ function renderDetailTab(tab) {
                         </div>
                     </div>
                     <div class="device-card-right">
-                        <button class="btn btn-xs btn-ghost" onclick="promptRenameDevice(${dev.id},'${esc(dev.device_name || '')}')">🏷️ Label</button>
+                        <button class="btn btn-xs btn-ghost" onclick="promptRenameDevice(${dev.id},'${esc(dev.device_name || '')}')">${icon('tag', 12)} Label</button>
                         ${dev.is_blocked ? `<button class="btn btn-xs btn-success" onclick="unblockDevDetail(${dev.id})">Unblock</button>` : `<button class="btn btn-xs btn-warning" onclick="blockDevDetail(${dev.id})">Block</button>`}
-                        <button class="btn btn-xs btn-danger" onclick="if(confirm('Hapus device?'))deleteDevDetail(${dev.id})">🗑️</button>
-                        <button class="btn btn-xs btn-ghost" onclick="addBlockedIP('${dev.ip_address}','Device ${dev.device_id}')">🚫 IP</button>
+                        <button class="btn btn-xs btn-danger" onclick="if(confirm('Delete device?'))deleteDevDetail(${dev.id})">${icon('trash', 12)}</button>
+                        <button class="btn btn-xs btn-ghost" onclick="addBlockedIP('${dev.ip_address}','Device ${dev.device_id}')">${icon('ban', 12)} IP</button>
                     </div>
                 </div>`;
                     }).join('')}
@@ -603,7 +667,7 @@ function renderDetailTab(tab) {
 
             container.innerHTML = `
         <div class="detail-activity">
-            <h4>📋 Access Log (50 terakhir)</h4>
+            <h4>${icon('file-text', 16)} Access Log (last 50)</h4>
             <div class="table-wrap" style="max-height:500px;overflow-y:auto">
                 <table><thead><tr><th>Waktu</th><th>Aksi</th><th>Device</th><th>IP</th><th>Detail</th></tr></thead>
                 <tbody>${d.recent_logs.map(l => {
@@ -623,12 +687,12 @@ function renderDetailTab(tab) {
         case 'plugin-usage':
             container.innerHTML = `
         <div class="detail-plugins">
-            <h4>🔌 Plugin Usage</h4>
+            <h4>${icon('activity', 16)} Plugin Usage</h4>
             ${d.plugin_usage && d.plugin_usage.length > 0 ? `
             <div class="table-wrap">
                 <table><thead><tr><th>Plugin</th><th>Aksi</th><th>Jumlah</th><th>Terakhir</th></tr></thead>
                 <tbody>${d.plugin_usage.map(p => `<tr>
-                    <td style="font-weight:600">🔌 ${esc(p.plugin_name)}</td>
+                    <td style="font-weight:600">${icon('plug', 14)} ${esc(p.plugin_name)}</td>
                     <td><span class="badge ${p.action === 'DOWNLOAD' ? 'badge-purple' : 'badge-cyan'}">${p.action}</span></td>
                     <td style="font-weight:700">${p.count}x</td>
                     <td style="font-size:11px;color:var(--muted)">${fmtDate(p.last_used)}</td>
@@ -640,34 +704,34 @@ function renderDetailTab(tab) {
         case 'edit':
             container.innerHTML = `
         <div class="detail-edit">
-            <h4>✏️ Edit License</h4>
+            <h4>${icon('edit', 16)} Edit License</h4>
             <div class="edit-grid">
                 <div class="form-group">
                     <label>Tanggal Expired</label>
                     <div class="inline-edit">
                         <input type="date" id="modal-edit-exp" value="${exp.toISOString().split('T')[0]}">
-                        <button class="btn btn-sm btn-primary" onclick="modalSaveExpiry()">💾 Simpan</button>
+                        <button class="btn btn-sm btn-primary" onclick="modalSaveExpiry()">${icon('save', 14)} Save</button>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Max Devices</label>
                     <div class="inline-edit">
                         <input type="number" id="modal-edit-maxdev" value="${d.max_devices}" min="1" max="100" style="width:80px">
-                        <button class="btn btn-sm btn-primary" onclick="modalSaveMaxDevices()">💾 Simpan</button>
+                        <button class="btn btn-sm btn-primary" onclick="modalSaveMaxDevices()">${icon('save', 14)} Save</button>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Catatan / Nama User</label>
                     <div class="inline-edit">
                         <input type="text" id="modal-edit-note" value="${esc(d.note || '')}" placeholder="Nama user, keterangan...">
-                        <button class="btn btn-sm btn-primary" onclick="modalSaveNote()">💾 Simpan</button>
+                        <button class="btn btn-sm btn-primary" onclick="modalSaveNote()">${icon('save', 14)} Save</button>
                     </div>
                 </div>
             </div>
             <div style="margin-top:24px;display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn btn-sm btn-ghost" onclick="openRenewModal(${d.id});closeKeyDetail()">⏰ Perpanjang</button>
-                ${d.is_active ? `<button class="btn btn-sm btn-warning" onclick="revokeKeyDetail()">🚫 Revoke Key</button>` : `<button class="btn btn-sm btn-success" onclick="activateKeyDetail()">✅ Aktifkan Key</button>`}
-                <button class="btn btn-sm btn-danger" onclick="if(confirm('Hapus license key ini beserta semua data device dan log?'))deleteKeyDetail()">🗑️ Hapus Key</button>
+                <button class="btn btn-sm btn-ghost" onclick="openRenewModal(${d.id});closeKeyDetail()">${icon('clock', 14)} Renew</button>
+                ${d.is_active ? `<button class="btn btn-sm btn-warning" onclick="revokeKeyDetail()">${icon('ban', 14)} Revoke Key</button>` : `<button class="btn btn-sm btn-success" onclick="activateKeyDetail()">${icon('check-circle', 14)} Activate Key</button>`}
+                <button class="btn btn-sm btn-danger" onclick="if(confirm('Delete this license key and all associated device and log data?'))deleteKeyDetail()">${icon('trash', 14)} Delete Key</button>
             </div>
         </div>`;
             break;
@@ -719,14 +783,14 @@ async function refreshDetailData() {
 }
 
 function getDeviceIcon(os) {
-    if (!os) return '📱';
+    if (!os) return icon('smartphone', 18);
     const lower = os.toLowerCase();
-    if (lower.includes('android')) return '🤖';
-    if (lower.includes('ios') || lower.includes('ipad')) return '🍎';
-    if (lower.includes('windows')) return '🪟';
-    if (lower.includes('mac')) return '🍎';
-    if (lower.includes('linux')) return '🐧';
-    return '📱';
+    if (lower.includes('android')) return icon('smartphone', 18);
+    if (lower.includes('ios') || lower.includes('ipad')) return icon('smartphone', 18);
+    if (lower.includes('windows')) return icon('monitor', 18);
+    if (lower.includes('mac')) return icon('monitor', 18);
+    if (lower.includes('linux')) return icon('monitor', 18);
+    return icon('smartphone', 18);
 }
 
 // ============================================================
@@ -747,11 +811,11 @@ async function genKey() {
         toast(data.message, 'success');
         const items = data.licenses ? data.licenses : [data.license];
         document.getElementById('gen-result').innerHTML = `
-            <div class="gen-result"><h4>✅ Key Berhasil Dibuat!</h4>
-            ${items.map(l => `<div class="gen-key-item" data-url="${esc(l.repo_url)}" onclick="copyUrl(this)" title="Klik untuk copy URL">
-                <span class="key-label">🔑 ${l.license_key}</span><span class="key-url">📋 ${esc(l.repo_url)}</span>
+            <div class="gen-result"><h4>${icon('check-circle', 18)} Keys Generated Successfully!</h4>
+            ${items.map(l => `<div class="gen-key-item" data-url="${esc(l.repo_url)}" onclick="copyUrl(this)" title="Click to copy URL">
+                <span class="key-label">${icon('key', 14)} ${l.license_key}</span><span class="key-url">${icon('copy', 12)} ${esc(l.repo_url)}</span>
             </div>`).join('')}
-            <p style="font-size:11px;color:var(--muted);margin-top:8px">Klik key untuk copy URL repo.</p></div>`;
+            <p style="font-size:11px;color:var(--muted);margin-top:8px">Click a key to copy the repo URL.</p></div>`;
         loadKeys();
     } catch (e) { toast(e.message, 'error'); }
 }
@@ -811,16 +875,16 @@ async function loadDevicesTab() {
                     <div class="device-info-enhanced">
                         <div class="device-name-row"><span class="pulse"></span><span class="device-display-name">${esc(displayName)}</span> <span class="badge badge-purple">${maskKey(d.license_key)}</span></div>
                         <div class="device-meta-row">
-                            ${d.device_model ? `<span class="device-meta-tag">📱 ${esc(d.device_model)}</span>` : ''}
-                            ${d.os_info ? `<span class="device-meta-tag">💻 ${esc(d.os_info)}</span>` : ''}
-                            <span class="device-meta-tag">🌐 ${d.ip_address}</span>
+                            ${d.device_model ? `<span class="device-meta-tag">${icon('smartphone', 12)} ${esc(d.device_model)}</span>` : ''}
+                            ${d.os_info ? `<span class="device-meta-tag">${icon('monitor', 12)} ${esc(d.os_info)}</span>` : ''}
+                            <span class="device-meta-tag">${icon('globe', 12)} ${d.ip_address}</span>
                             <span class="device-meta-tag dim">Last: ${fmtDate(d.last_seen)}</span>
                         </div>
                     </div>
                 </div>
                 <div class="device-card-right">
                     <button class="btn btn-xs btn-warning" onclick="blockDev2(${d.id})">Block</button>
-                    <button class="btn btn-xs btn-ghost" onclick="addBlockedIP('${d.ip_address}','Online device')">🚫 IP</button>
+                    <button class="btn btn-xs btn-ghost" onclick="addBlockedIP('${d.ip_address}','Online device')">${icon('ban', 12)} IP</button>
                 </div>
             </div>`;
             }).join('');
@@ -828,7 +892,7 @@ async function loadDevicesTab() {
         document.getElementById('blocked-list').innerHTML = blocked.length === 0
             ? '<p style="color:var(--muted);text-align:center;padding:20px">Tidak ada IP yang diblokir</p>'
             : blocked.map(b => `<div class="ip-item">
-                <div class="ip-addr">🚫 ${b.ip_address}</div>
+                <div class="ip-addr">${icon('ban', 14)} ${b.ip_address}</div>
                 <div class="ip-reason">${esc(b.reason || '-')}</div>
                 <div style="font-size:11px;color:var(--muted)">${fmtDate(b.blocked_at)}</div>
                 <button class="btn btn-xs btn-success" onclick="removeBlockedIP('${b.ip_address}')">Unblock</button>
@@ -865,12 +929,12 @@ async function loadPluginStats() {
             document.getElementById('plugin-stats-popular').innerHTML = stats.popular.map(p => `
                 <div class="plugin-bar-item">
                     <div class="plugin-bar-header">
-                        <span class="plugin-bar-name">🔌 ${esc(p.plugin_name)}</span>
+                        <span class="plugin-bar-name">${icon('plug', 14)} ${esc(p.plugin_name)}</span>
                         <span class="plugin-bar-count">${p.total} total · ${p.downloads} downloads · ${p.unique_users} users</span>
                     </div>
                     <div class="plugin-bar-track">
                         <div class="plugin-bar-fill" style="width:${Math.max(5, (p.total / maxTotal) * 100)}%">
-                            <span class="plugin-bar-dl">📥${p.downloads} 🔌${p.opens} 🔍${p.searches || 0} ⏳${p.loads || 0} ▶️${p.plays || 0}</span>
+                            <span class="plugin-bar-dl">${icon('download', 12)}${p.downloads} ${icon('plug', 12)}${p.opens} ${icon('search', 12)}${p.searches || 0} ${icon('loader', 12)}${p.loads || 0} ${icon('play', 12)}${p.plays || 0}</span>
                         </div>
                     </div>
                 </div>
@@ -892,7 +956,7 @@ async function loadPluginStats() {
                 const detail = r.data ? r.data : '-';
                 return `<tr>
                     <td style="font-size:11px;color:var(--muted)">${fmtDate(r.created_at)}</td>
-                    <td style="font-weight:600">🔌 ${esc(r.plugin_name)}</td>
+                    <td style="font-weight:600">${icon('plug', 14)} ${esc(r.plugin_name)}</td>
                     <td><span class="badge ${r.action === 'DOWNLOAD' ? 'badge-purple' : 'badge-cyan'}">${r.action}</span></td>
                     <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(detail)}">${esc(detail)}</td>
                     <td><span class="badge badge-cyan" style="font-size:10px">${keyLabel}</span></td>

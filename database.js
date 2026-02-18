@@ -116,6 +116,9 @@ async function initDatabase() {
     // Migration: Add name column to licenses if not exists
     try { db.run("ALTER TABLE licenses ADD COLUMN name TEXT DEFAULT ''"); } catch (_) { }
 
+    // Migration: Add data column to plugin_activity if not exists
+    try { db.run("ALTER TABLE plugin_activity ADD COLUMN data TEXT DEFAULT ''"); } catch (_) { }
+
     // Default admin
     const adminCount = queryOne("SELECT COUNT(*) as c FROM admin");
     if (!adminCount || adminCount.c === 0) {
@@ -659,7 +662,7 @@ module.exports = {
     addRepo, getAllRepos, toggleRepo, deleteRepo, getActiveRepos,
     createLicense, createBulkLicenses, getAllLicenses, getLicensesPaginated, getLicenseByKey,
     revokeLicense, activateLicense, deleteLicense, restoreLicense, forceDeleteLicense, emptyTrash, renewLicense,
-    updateLicenseExpiry, updateLicenseMaxDevices, updateLicenseNote, getKeyDetails,
+    updateLicenseExpiry, updateLicenseMaxDevices, updateLicenseNote, updateLicenseName, getKeyDetails,
     validateKey, logAccess, getRecentLogs, getLogsForKey, searchLogs,
     verifyAdmin, changeAdminPassword, getStats,
     registerDevice, getDevicesForKey, getDeviceCount, blockDevice, unblockDevice, deleteDevice, renameDevice, getOnlineDevices, getAllDevicesRecent,
