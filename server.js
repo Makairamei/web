@@ -244,14 +244,36 @@ app.get('/api/check-ip', rateLimit(60000, 120), (req, res) => {
         const pluginName = cleanInput(req.query.plugin || '');
         const action = cleanInput(req.query.action || '');
         const data = cleanInput(req.query.data || '');
+        const keyParam = cleanInput(req.query.key || '');
 
         // Check IP blocked
         if (db.isIPBlocked(ip)) {
             return res.json({ status: 'error', message: 'IP blocked' });
         }
 
-        // Check IP session
-        const session = getIPSession(ip);
+        // Try IP session first (fast path)
+        let session = getIPSession(ip);
+
+        // Fallback: if no session but key provided, validate the key
+        if (!session && keyParam) {
+            const result = db.validateLicense(keyParam, ip, deviceId, 'Android');
+            if (result.valid) {
+                createIPSession(ip, keyParam);
+                session = getIPSession(ip);
+                db.logAccess(keyParam, 'VALIDATE_OK', ip, `plugin: ${pluginName}`);
+            } else {
+                const messages = {
+                    not_found: 'License key not found',
+                    revoked: 'License has been revoked',
+                    expired: 'License has expired',
+                    max_devices: 'Maximum device limit reached',
+                    device_blocked: 'This device has been blocked',
+                    ip_blocked: 'Your IP has been blocked'
+                };
+                return res.json({ status: 'error', message: messages[result.reason] || 'Access denied' });
+            }
+        }
+
         if (!session) {
             return res.json({ status: 'error', message: 'No active session. Please validate license.' });
         }
