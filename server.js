@@ -1,108 +1,130 @@
+// ============================================================
+// CloudStream Premium — API Server
+// Production-grade Express + JWT + Helmet
+// ============================================================
+
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const path = require('path');
-const fs = require('fs');
 const os = require('os');
-const multer = require('multer');
 const db = require('./database');
 
-// Multer setup for database upload
-const upload = multer({ dest: '/tmp/', limits: { fileSize: 50 * 1024 * 1024 } });
+// ============================================================
+// CONFIGURATION
+// ============================================================
 
-// Auto-detect LAN IP
-function getLocalIP() {
-    const nets = os.networkInterfaces();
-    for (const name of Object.keys(nets)) {
-        for (const net of nets[name]) {
-            if (net.family === 'IPv4' && !net.internal && !net.address.startsWith('172.') && !net.address.startsWith('10.')) {
-                return net.address;
-            }
-        }
-    }
-    for (const name of Object.keys(nets)) {
-        for (const net of nets[name]) {
-            if (net.family === 'IPv4' && !net.internal) return net.address;
-        }
-    }
-    return 'localhost';
-}
+const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
+const JWT_EXPIRY = '24h';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+// ============================================================
+// MIDDLEWARE
+// ============================================================
+
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false
+}));
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ============================================================
-// AUTH
+// RATE LIMITING
 // ============================================================
-const adminTokens = new Map();
-function generateToken() { return crypto.randomBytes(32).toString('hex'); }
 
-function authMiddleware(req, res, next) {
-    const token = req.headers['authorization']?.replace('Bearer ', '');
-    if (!token || !adminTokens.has(token)) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
-    req.admin = adminTokens.get(token);
-    next();
-}
+const rateBuckets = new Map();
 
-// Rate limit
-const rateLimiter = new Map();
-function rateLimit(windowMs = 60000, max = 30) {
+function rateLimit(windowMs = 60000, max = 60) {
     return (req, res, next) => {
-        const ip = req.ip;
+        const ip = req.ip || req.connection.remoteAddress;
+        const key = `${ip}:${req.route?.path || req.path}`;
         const now = Date.now();
-        let entry = rateLimiter.get(ip);
-        if (!entry || now > entry.resetAt) {
-            entry = { count: 0, resetAt: now + windowMs };
-            rateLimiter.set(ip, entry);
+        let bucket = rateBuckets.get(key);
+
+        if (!bucket || now > bucket.resetAt) {
+            bucket = { count: 0, resetAt: now + windowMs };
+            rateBuckets.set(key, bucket);
         }
-        entry.count++;
-        if (entry.count > max) return res.status(429).json({ error: 'Too many requests' });
+
+        bucket.count++;
+        if (bucket.count > max) {
+            return res.status(429).json({ status: 'error', message: 'Too many requests' });
+        }
         next();
     };
 }
+
+// Cleanup rate buckets every 5 minutes
 setInterval(() => {
     const now = Date.now();
-    for (const [k, v] of rateLimiter) { if (now > v.resetAt) rateLimiter.delete(k); }
+    for (const [k, v] of rateBuckets) {
+        if (now > v.resetAt) rateBuckets.delete(k);
+    }
 }, 300000);
 
-// Plugin cache (5 min)
-let pluginCache = null;
-let pluginCacheTime = 0;
-const CACHE_MS = 5 * 60 * 1000;
+// ============================================================
+// JWT AUTH MIDDLEWARE
+// ============================================================
 
-// Session tokens for extensions (1 hour expiry)
-const sessionTokens = new Map();
-function createSessionToken(key) {
-    const token = crypto.randomBytes(16).toString('hex');
-    sessionTokens.set(token, { key, created: Date.now() });
-    return token;
-}
-setInterval(() => {
-    const hour = 60 * 60 * 1000;
-    for (const [t, v] of sessionTokens) {
-        if (Date.now() - v.created > hour) sessionTokens.delete(t);
+function authMiddleware(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ status: 'error', message: 'Unauthorized' });
     }
-}, 600000);
+    try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.admin = decoded;
+        next();
+    } catch (e) {
+        return res.status(401).json({ status: 'error', message: 'Invalid or expired token' });
+    }
+}
 
 // ============================================================
-// IP SESSIONS (For seamless plugin auth)
+// HELPERS
 // ============================================================
+
+function getClientIP(req) {
+    return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.connection.remoteAddress || '';
+}
+
+function cleanInput(val) {
+    if (typeof val !== 'string') return '';
+    return val.trim().substring(0, 500);
+}
+
+function getLocalIP() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return '127.0.0.1';
+}
+
+// ============================================================
+// IP SESSION CACHE (for check-ip fast path)
+// ============================================================
+
 const ipSessions = new Map();
 
-function createIpSession(ip, key, durationMs = 24 * 60 * 60 * 1000) {
-    ipSessions.set(ip, {
-        key,
-        expiresAt: Date.now() + durationMs
-    });
+function createIPSession(ip, key, durationMs = 24 * 60 * 60 * 1000) {
+    ipSessions.set(ip, { key, expiresAt: Date.now() + durationMs });
 }
 
-function getIpSession(ip) {
+function getIPSession(ip) {
     const session = ipSessions.get(ip);
     if (!session) return null;
     if (Date.now() > session.expiresAt) {
@@ -112,97 +134,201 @@ function getIpSession(ip) {
     return session;
 }
 
-// ============================================================
-// HELPER: Extract plugin name from URL
-// ============================================================
-function extractPluginName(url) {
-    if (!url) return 'Unknown';
-    try {
-        const urlDecoded = decodeURIComponent(url);
-        const parts = urlDecoded.split('/');
-        let filename = parts[parts.length - 1] || 'Unknown';
-        // Remove query params
-        filename = filename.split('?')[0];
-        // Remove extension
-        filename = filename.replace(/\.cs3$/i, '').replace(/\.apk$/i, '');
-        // Clean up dashes/underscores to spaces
-        filename = filename.replace(/[-_]+/g, ' ').trim();
-        return filename || 'Unknown';
-    } catch (e) {
-        return 'Unknown';
+// Cleanup expired sessions every 10 minutes
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, s] of ipSessions) {
+        if (now > s.expiresAt) ipSessions.delete(ip);
     }
-}
-
-// Normalize device ID — treat junk values as empty
-function cleanDeviceId(id) {
-    if (!id || id === 'unknown' || id === 'null' || id === 'undefined' || id === 'N/A') return '';
-    return id;
-}
+}, 600000);
 
 // ============================================================
-// 🔓 PUBLIC API — Extension License Validation
+// PUBLIC API — License Validation
 // ============================================================
 
 app.post('/api/validate', rateLimit(60000, 30), (req, res) => {
     try {
-        const { key, device_id, device_name } = req.body;
-        const ip = req.ip;
+        const key = cleanInput(req.body.key);
+        const deviceId = cleanInput(req.body.device_id);
+        const deviceName = cleanInput(req.body.device_name);
+        const ip = getClientIP(req);
 
         if (!key) {
-            return res.json({
-                status: 'error',
-                message: 'Masukkan License Key terlebih dahulu'
-            });
+            return res.json({ status: 'error', message: 'License key required' });
         }
 
-        const lic = db.getLicenseByKey(key);
-        if (!lic) {
-            db.logAccess(key, 'INVALID_KEY', ip, `device: ${device_id}`);
-            return res.json({
-                status: 'error',
-                message: 'License key tidak ditemukan. Periksa kembali atau hubungi admin.'
-            });
+        const result = db.validateLicense(key, ip, deviceId, deviceName);
+
+        if (!result.valid) {
+            const messages = {
+                not_found: 'License key not found',
+                revoked: 'License has been revoked',
+                expired: 'License has expired',
+                max_devices: 'Maximum device limit reached',
+                device_blocked: 'This device has been blocked',
+                ip_blocked: 'Your IP has been blocked'
+            };
+            db.logAccess(key, 'VALIDATE_FAIL', ip, result.reason);
+            return res.json({ status: 'error', message: messages[result.reason] || 'Access denied', reason: result.reason });
         }
 
-        if (!lic.is_active) {
-            db.logAccess(key, 'REVOKED', ip, `device: ${device_id}`);
-            return res.json({
-                status: 'revoked',
-                message: 'License key telah di-revoke oleh admin.'
-            });
-        }
-
-        const now = new Date();
-        const expDate = new Date(lic.expired_at);
-        if (now > expDate) {
-            db.logAccess(key, 'EXPIRED', ip, `device: ${device_id}`);
-            return res.json({
-                status: 'expired',
-                message: 'License key sudah expired. Hubungi admin untuk perpanjang.'
-            });
-        }
-
-        const daysLeft = Math.ceil((expDate - now) / 86400000);
-        const sessionToken = createSessionToken(key);
-        db.logAccess(key, 'VALID', ip, `device: ${device_id} | ${device_name || 'Unknown'}`);
+        // Create IP session for fast check-ip path
+        createIPSession(ip, key);
+        db.logAccess(key, 'VALIDATE_OK', ip, `device: ${deviceId}`);
 
         res.json({
             status: 'active',
-            message: 'License key aktif',
-            expired_at: lic.expired_at,
-            days_left: daysLeft,
-            max_devices: lic.max_devices || 0,
-            current_devices: 0,
-            session_token: sessionToken
+            message: 'License valid',
+            expires_at: result.license.expires_at,
+            days_left: result.daysLeft,
+            max_devices: result.license.max_devices
         });
     } catch (e) {
-        console.error('Validate error:', e);
-        res.status(500).json({
-            status: 'error',
-            message: 'Server error, coba lagi nanti'
-        });
+        console.error('Validate error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
     }
 });
+
+// ============================================================
+// PUBLIC API — Heartbeat
+// ============================================================
+
+app.post('/api/heartbeat', rateLimit(60000, 60), (req, res) => {
+    try {
+        const key = cleanInput(req.body.key);
+        const deviceId = cleanInput(req.body.device_id);
+        const ip = getClientIP(req);
+
+        if (!key) return res.json({ status: 'error', message: 'Key required' });
+
+        const lic = db.getLicenseByKey(key);
+        if (!lic) return res.json({ status: 'error', reason: 'not_found' });
+        if (lic.status !== 'active') return res.json({ status: 'error', reason: lic.status });
+
+        const now = new Date();
+        const expiry = new Date(lic.expires_at);
+        if (now > expiry) {
+            db.updateLicenseStatus(lic.id, 'expired');
+            return res.json({ status: 'error', reason: 'expired' });
+        }
+
+        // Refresh IP session
+        createIPSession(ip, key);
+
+        res.json({ status: 'active', days_left: Math.ceil((expiry - now) / 86400000) });
+    } catch (e) {
+        console.error('Heartbeat error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// ============================================================
+// PUBLIC API — Quick IP Check
+// ============================================================
+
+app.get('/api/check-ip', rateLimit(60000, 120), (req, res) => {
+    try {
+        const ip = getClientIP(req);
+        const deviceId = cleanInput(req.query.device_id || '');
+        const pluginName = cleanInput(req.query.plugin || '');
+        const action = cleanInput(req.query.action || '');
+        const data = cleanInput(req.query.data || '');
+
+        // Check IP blocked
+        if (db.isIPBlocked(ip)) {
+            return res.json({ status: 'error', message: 'IP blocked' });
+        }
+
+        // Check IP session
+        const session = getIPSession(ip);
+        if (!session) {
+            return res.json({ status: 'error', message: 'No active session. Please validate license.' });
+        }
+
+        // Validate license is still good
+        const lic = db.getLicenseByKey(session.key);
+        if (!lic || lic.status !== 'active') {
+            ipSessions.delete(ip);
+            return res.json({ status: 'error', message: 'License inactive' });
+        }
+
+        const expiry = new Date(lic.expires_at);
+        if (new Date() > expiry) {
+            db.updateLicenseStatus(lic.id, 'expired');
+            ipSessions.delete(ip);
+            return res.json({ status: 'error', message: 'License expired' });
+        }
+
+        // Track plugin activity
+        if (pluginName && action && action !== 'check') {
+            const actionUpper = action.toUpperCase();
+            if (['HOME', 'OPEN', 'SEARCH', 'LOAD', 'PLAY', 'SWITCH', 'DOWNLOAD'].includes(actionUpper)) {
+                db.trackPluginUsage(session.key, deviceId, pluginName, actionUpper, ip);
+            }
+            if ((actionUpper === 'PLAY' || actionUpper === 'DOWNLOAD') && data) {
+                db.trackPlayback(session.key, deviceId, pluginName, data, actionUpper === 'DOWNLOAD' ? 'DOWNLOAD' : '', ip);
+            }
+        }
+
+        res.json({ status: 'active', message: 'Valid', expiry: lic.expires_at });
+    } catch (e) {
+        console.error('Check-IP error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// ============================================================
+// PUBLIC API — Plugin Tracking
+// ============================================================
+
+app.post('/api/track/plugin', rateLimit(60000, 60), (req, res) => {
+    try {
+        const key = cleanInput(req.body.key);
+        const deviceId = cleanInput(req.body.device_id);
+        const pluginName = cleanInput(req.body.plugin_name);
+        const action = cleanInput(req.body.action || 'OPEN');
+        const ip = getClientIP(req);
+
+        if (!key || !pluginName) {
+            return res.json({ status: 'error', message: 'Missing fields' });
+        }
+
+        db.trackPluginUsage(key, deviceId, pluginName, action.toUpperCase(), ip);
+        res.json({ status: 'ok' });
+    } catch (e) {
+        console.error('Track plugin error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// ============================================================
+// PUBLIC API — Playback Tracking
+// ============================================================
+
+app.post('/api/track/playback', rateLimit(60000, 60), (req, res) => {
+    try {
+        const key = cleanInput(req.body.key);
+        const deviceId = cleanInput(req.body.device_id);
+        const pluginName = cleanInput(req.body.plugin_name);
+        const videoTitle = cleanInput(req.body.video_title);
+        const sourceProvider = cleanInput(req.body.source_provider);
+        const ip = getClientIP(req);
+
+        if (!key || !pluginName || !videoTitle) {
+            return res.json({ status: 'error', message: 'Missing fields' });
+        }
+
+        db.trackPlayback(key, deviceId, pluginName, videoTitle, sourceProvider, ip);
+        res.json({ status: 'ok' });
+    } catch (e) {
+        console.error('Track playback error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// ============================================================
+// PUBLIC API — Config
+// ============================================================
 
 app.get('/api/config', (req, res) => {
     res.json({
@@ -211,588 +337,702 @@ app.get('/api/config', (req, res) => {
     });
 });
 
-app.get('/api/check-ip', (req, res) => {
-    const ip = req.ip;
-    const deviceId = cleanDeviceId(req.query.device_id);
-    const ua = req.headers['user-agent'] || '';
-    const pluginName = req.query.plugin || null;
+// ============================================================
+// PUBLIC API — Health Check
+// ============================================================
 
-    // DEBUG LOG
-    if (pluginName || req.query.action) {
-        console.log(`[DEBUG] check-ip: IP=${ip} Plugin=${pluginName} Action=${req.query.action || 'OPEN'} Data=${req.query.data}`);
-    }
-
-    const session = getIpSession(ip);
-
-    if (!session) {
-        return res.json({ status: 'error', message: 'IP belum terdaftar. Silakan refresh Repository.' });
-    }
-
-    const result = db.validateKey(session.key, ip, ua, deviceId || null);
-
-    if (!result.valid) {
-        const messages = {
-            'EXPIRED': 'License key sudah expired',
-            'REVOKED': 'License key di-revoke',
-            'BLOCKED_IP': 'IP anda diblokir',
-            'MAX_DEVICES': `Batas device tercapai (${result.current}/${result.max})`,
-            'DEVICE_BLOCKED': 'Device anda diblokir'
-        };
-        // Only log errors, not routine checks
-        db.logAccess(session.key, result.reason, ip, deviceId ? `Device: ${deviceId}` : '');
-        return res.json({
-            status: 'error',
-            message: messages[result.reason] || 'Akses Ditolak'
-        });
-    }
-
-    // Only log plugin OPEN events (not routine check-ip pings)
-    if (pluginName) {
-        const action = req.query.action || 'OPEN';
-        const data = req.query.data || '';
-
-        // Filter out routine checks if named 'check'
-        if (action !== 'check') {
-            const actionUpper = action.toUpperCase();
-            db.logPluginActivity(session.key, pluginName, actionUpper, ip, deviceId, data);
-
-            // Format details
-            let details = pluginName;
-            if (data) details += ` | ${data}`;
-
-            db.logAccess(session.key, `PLUGIN_${actionUpper}`, ip, details);
-        }
-    }
-
-    res.json({ status: 'active', message: 'IP & Device Valid', expiry: result.license.expired_at });
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
 });
 
 // ============================================================
-// 🌟 PROXY REPO ENDPOINTS (KEY-GATED)
+// REPO GATING
 // ============================================================
 
-app.get('/r/:key/repo.json', rateLimit(60000, 60), async (req, res) => {
-    const ip = req.ip;
-    const ua = req.headers['user-agent'] || '';
-    const result = db.validateKey(req.params.key, ip, ua);
+app.get('/r/:key/repo.json', rateLimit(60000, 60), (req, res) => {
+    try {
+        const key = req.params.key;
+        const lic = db.getLicenseByKey(key);
 
-    if (!result.valid) {
-        const messages = {
-            'EXPIRED': 'License key sudah expired',
-            'REVOKED': 'License key di-revoke',
-            'BLOCKED_IP': 'IP anda diblokir',
-            'MAX_DEVICES': `Batas device tercapai (${result.current}/${result.max})`,
-            'DEVICE_BLOCKED': 'Device anda diblokir'
-        };
-        // If request accepts HTML (browser), show blocked page
-        if (req.accepts('html')) {
-            return res.status(403).sendFile(path.join(__dirname, 'public', 'blocked.html'));
+        if (!lic || lic.status !== 'active') {
+            return res.status(403).json({ status: 'error', message: 'Invalid or expired license' });
         }
-        return res.status(403).json({
-            error: messages[result.reason] || 'License key tidak valid'
+
+        const expiry = new Date(lic.expires_at);
+        if (new Date() > expiry) {
+            db.updateLicenseStatus(lic.id, 'expired');
+            return res.status(403).json({ status: 'error', message: 'License expired' });
+        }
+
+        const serverUrl = db.getSetting('server_url') || `http://${getLocalIP()}:${PORT}`;
+        const ip = getClientIP(req);
+        createIPSession(ip, key);
+        db.logAccess(key, 'REPO_ACCESS', ip, 'repo.json');
+
+        res.json({
+            name: "Premium Extensions",
+            description: "CloudStream Premium Extensions",
+            manifestVersion: 1,
+            pluginLists: [`${serverUrl}/r/${key}/plugins.json`]
         });
+    } catch (e) {
+        console.error('Repo error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
     }
-
-    createIpSession(ip, req.params.key);
-    db.logAccess(req.params.key, 'REPO_ACCESS', ip, `Repo loaded`);
-
-    const serverUrl = db.getSetting('server_url') || `http://${getLocalIP()}:${PORT}`;
-    res.json({
-        name: "Premium Extensions",
-        description: "Premium CloudStream Extensions",
-        manifestVersion: 1,
-        pluginLists: [
-            `${serverUrl}/r/${req.params.key}/plugins.json`
-        ]
-    });
 });
 
 app.get('/r/:key/plugins.json', rateLimit(60000, 60), async (req, res) => {
-    const ip = req.ip;
-    const ua = req.headers['user-agent'] || '';
-    const result = db.validateKey(req.params.key, ip, ua);
-
-    if (!result.valid) {
-        return res.status(403).json({ error: 'Key tidak valid' });
-    }
-
     try {
-        const plugins = await fetchAllPlugins(req.params.key);
+        const key = req.params.key;
+        const lic = db.getLicenseByKey(key);
+
+        if (!lic || lic.status !== 'active') {
+            return res.status(403).json({ status: 'error', message: 'Invalid license' });
+        }
+
+        const expiry = new Date(lic.expires_at);
+        if (new Date() > expiry) {
+            db.updateLicenseStatus(lic.id, 'expired');
+            return res.status(403).json({ status: 'error', message: 'License expired' });
+        }
+
+        // Fetch from upstream builds branch
+        const upstream = db.getSetting('upstream_plugins_url') || 'https://raw.githubusercontent.com/Makairamei/CS/builds/plugins.json';
+
+        const response = await fetch(upstream);
+        if (!response.ok) {
+            return res.status(502).json({ status: 'error', message: 'Failed to fetch plugins' });
+        }
+
+        const plugins = await response.json();
         res.json(plugins);
-    } catch (err) {
-        console.error('Fetch plugins error:', err.message);
-        res.status(500).json({ error: 'Gagal fetch plugins dari source repos' });
-    }
-});
-
-// Enhanced download proxy — logs plugin name
-app.get('/r/:key/dl', rateLimit(60000, 120), async (req, res) => {
-    const ip = req.ip;
-    const ua = req.headers['user-agent'] || '';
-    const result = db.validateKey(req.params.key, ip, ua);
-
-    if (!result.valid) {
-        return res.status(403).json({ error: 'Key tidak valid' });
-    }
-
-    const url = req.query.url;
-    if (!url) return res.status(400).json({ error: 'Missing url param' });
-
-    const pluginName = extractPluginName(url);
-
-    try {
-        db.logAccess(req.params.key, 'DOWNLOAD', ip, pluginName);
-        db.logPluginActivity(req.params.key, pluginName, 'DOWNLOAD', ip);
-
-        const response = await fetch(url, {
-            headers: { 'User-Agent': 'CloudStream/Premium-Proxy' }
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        res.setHeader('Content-Type', 'application/octet-stream');
-        const buffer = Buffer.from(await response.arrayBuffer());
-        res.send(buffer);
-    } catch (err) {
-        console.error('Download proxy error:', err.message);
-        db.logAccess(req.params.key, 'DOWNLOAD_ERROR', ip, `${pluginName} — ${err.message}`);
-        res.status(500).json({ error: 'Gagal download file' });
-    }
-});
-
-// ============================================================
-// 🎬 PLAYBACK CHECK ENDPOINT (STRICT MODE)
-// ============================================================
-app.post('/api/check-play', rateLimit(60000, 100), (req, res) => {
-    let { key, plugin_name, video_title, device_id } = req.body;
-    const ip = req.ip;
-    const ua = req.headers['user-agent'] || '';
-
-    // 0. Auto-resolve Key from IP Session if missing
-    if (!key) {
-        const session = getIpSession(ip);
-        if (session) {
-            key = session.key;
-        } else {
-            return res.status(401).json({
-                status: 'error',
-                allowed: false,
-                message: 'Session expired. Please refresh the Repository to re-authenticate.'
-            });
-        }
-    }
-
-    // 1. Validate License (Enhanced check with device ID if provided)
-    const result = db.validateKey(key, ip, ua, device_id);
-
-    if (!result.valid) {
-        const messages = {
-            'EXPIRED': 'License expired',
-            'REVOKED': 'License revoked',
-            'BLOCKED_IP': 'IP blocked',
-            'MAX_DEVICES': 'Max devices reached',
-            'DEVICE_BLOCKED': 'Device blocked',
-            'INVALID_KEY': 'Invalid license key'
-        };
-        const reason = messages[result.reason] || 'Access denied';
-
-        // Log failure
-        db.logAccess(key, 'PLAY_BLOCK', ip, `${plugin_name} | ${video_title} | ${reason}`);
-        db.logPluginActivity(key, plugin_name || 'Unknown', 'PLAY_BLOCK', ip, device_id);
-
-        return res.status(403).json({
-            status: 'error',
-            allowed: false,
-            message: reason
-        });
-    }
-
-    // 2. Log Success
-    db.logAccess(key, 'PLAY', ip, `${plugin_name} | ${video_title}`);
-    db.logPluginActivity(key, plugin_name || 'Unknown', 'PLAY', ip, device_id);
-
-    // 3. Return Success
-    res.json({
-        status: 'success',
-        allowed: true,
-        message: 'Playback authorized'
-    });
-});
-
-// Fetch and merge plugins from all active repos
-async function fetchAllPlugins(key) {
-    if (pluginCache && (Date.now() - pluginCacheTime < CACHE_MS)) {
-        return rewriteUrls(pluginCache, key);
-    }
-
-    const repos = db.getActiveRepos();
-    let allPlugins = [];
-
-    for (const repo of repos) {
-        try {
-            const res = await fetch(repo.url, {
-                headers: { 'User-Agent': 'CloudStream/Premium-Proxy' }
-            });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
-
-            if (Array.isArray(data)) {
-                allPlugins.push(...data);
-                console.log(`✅ Fetched ${repo.name}: ${data.length} plugins`);
-            } else if (data.pluginLists) {
-                for (const listUrl of data.pluginLists) {
-                    try {
-                        const listRes = await fetch(listUrl, {
-                            headers: { 'User-Agent': 'CloudStream/Premium-Proxy' }
-                        });
-                        if (listRes.ok) {
-                            const plugins = await listRes.json();
-                            if (Array.isArray(plugins)) {
-                                allPlugins.push(...plugins);
-                                console.log(`✅ Fetched ${repo.name}: found plugins`);
-                            }
-                        }
-                    } catch (e) {
-                        console.error(`❌ Error fetching plugin list: ${e.message}`);
-                    }
-                }
-            }
-        } catch (e) {
-            console.error(`❌ Error fetching ${repo.name}: ${e.message}`);
-        }
-    }
-
-    pluginCache = allPlugins;
-    pluginCacheTime = Date.now();
-    return rewriteUrls(allPlugins, key);
-}
-
-// Rewrite .cs3 download URLs — ALWAYS proxy by default for security
-function rewriteUrls(plugins, key) {
-    const setting = db.getSetting('proxy_downloads');
-    // Default to TRUE — only disable if explicitly set to 'false'
-    const proxyDownloads = setting !== 'false';
-    if (!proxyDownloads) {
-        return plugins;
-    }
-    const serverUrl = db.getSetting('server_url') || `http://${getLocalIP()}:${PORT}`;
-    return plugins.map(p => {
-        const copy = { ...p };
-        if (copy.url) {
-            copy.url = `${serverUrl}/r/${key}/dl?url=${encodeURIComponent(copy.url)}`;
-        }
-        return copy;
-    });
-}
-
-// ============================================================
-// 🔒 ADMIN API
-// ============================================================
-app.post('/api/admin/login', rateLimit(60000, 10), (req, res) => {
-    const { username, password } = req.body;
-    const admin = db.verifyAdmin(username, password);
-    if (!admin) return res.status(401).json({ error: 'Username atau password salah' });
-    const token = generateToken();
-    adminTokens.set(token, admin);
-    res.json({ token, admin: { username: admin.username } });
-});
-
-app.post('/api/admin/change-password', authMiddleware, (req, res) => {
-    const { new_password } = req.body;
-    if (!new_password || new_password.length < 6) return res.status(400).json({ error: 'Password minimal 6 karakter' });
-    db.changeAdminPassword(req.admin.username, new_password);
-    res.json({ message: 'Password diganti' });
-});
-
-// Stats
-app.get('/api/admin/stats', authMiddleware, (req, res) => {
-    res.json(db.getStats());
-});
-
-// Repos
-app.get('/api/admin/repos', authMiddleware, (req, res) => {
-    res.json(db.getAllRepos());
-});
-
-app.post('/api/admin/repos', authMiddleware, (req, res) => {
-    const { name, url } = req.body;
-    if (!name || !url) return res.status(400).json({ error: 'Name dan URL wajib diisi' });
-    const repo = db.addRepo(name, url);
-    res.json(repo);
-});
-
-app.put('/api/admin/repos/:id/toggle', authMiddleware, (req, res) => {
-    db.toggleRepo(req.params.id, req.body.active);
-    res.json({ message: 'Repo diperbarui' });
-});
-
-app.delete('/api/admin/repos/:id', authMiddleware, (req, res) => {
-    db.deleteRepo(req.params.id);
-    res.json({ message: 'Repo dihapus' });
-});
-
-app.post('/api/admin/repos/refresh', authMiddleware, (req, res) => {
-    pluginCache = null;
-    pluginCacheTime = 0;
-    res.json({ message: 'Cache plugin di-reset. Akan fetch ulang saat ada request.' });
-});
-
-// Keys
-app.get('/api/admin/keys', authMiddleware, (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const search = req.query.search || '';
-    const trashed = req.query.trashed === 'true';
-
-    const result = db.getLicensesPaginated(page, limit, search, trashed);
-    const serverUrl = db.getSetting('server_url') || `http://${getLocalIP()}:${PORT}`;
-
-    res.json({
-        ...result,
-        data: result.data.map(k => ({
-            ...k,
-            repo_url: `${serverUrl}/r/${k.license_key}/repo.json`
-        }))
-    });
-});
-
-app.post('/api/admin/keys/bulk-delete', authMiddleware, (req, res) => {
-    const { ids, force } = req.body; // force=true for permanent delete
-    if (!ids || !Array.isArray(ids)) return res.status(400).json({ error: 'IDs invalid' });
-
-    ids.forEach(id => {
-        if (force) db.forceDeleteLicense(id);
-        else db.deleteLicense(id);
-    });
-    res.json({ message: `${ids.length} key berhasil dihapus` });
-});
-
-app.post('/api/admin/keys/bulk-restore', authMiddleware, (req, res) => {
-    const { ids } = req.body;
-    if (!ids || !Array.isArray(ids)) return res.status(400).json({ error: 'IDs invalid' });
-
-    ids.forEach(id => db.restoreLicense(id));
-    res.json({ message: `${ids.length} key berhasil dipulihkan` });
-});
-
-app.post('/api/admin/keys/bulk-renew', authMiddleware, (req, res) => {
-    const { ids, days } = req.body;
-    if (!ids || !Array.isArray(ids)) return res.status(400).json({ error: 'IDs invalid' });
-
-    ids.forEach(id => db.renewLicense(id, parseInt(days)));
-    res.json({ message: `${ids.length} key berhasil diperpanjang` });
-});
-
-app.delete('/api/admin/trash', authMiddleware, (req, res) => {
-    db.emptyTrash();
-    res.json({ message: 'Sampah berhasil dikosongkan' });
-});
-
-app.post('/api/admin/keys/generate', authMiddleware, (req, res) => {
-    const { duration_days = 30, note = '', name = '', count = 1, max_devices = 2 } = req.body;
-    const serverUrl = db.getSetting('server_url') || `http://${getLocalIP()}:${PORT}`;
-    if (count > 1) {
-        // Bulk currently doesn't support individual names, maybe auto-gen names? User didn't ask.
-        const licenses = db.createBulkLicenses({ count, durationDays: duration_days, note, maxDevices: max_devices });
-        return res.json({
-            message: `${count} key berhasil dibuat`,
-            licenses: licenses.map(l => ({ ...l, repo_url: `${serverUrl}/r/${l.license_key}/repo.json` }))
-        });
-    }
-    const license = db.createLicense({ durationDays: duration_days, note, name, maxDevices: max_devices });
-    res.json({
-        message: 'Key berhasil dibuat',
-        license: { ...license, repo_url: `${serverUrl}/r/${license.license_key}/repo.json` }
-    });
-});
-
-app.put('/api/admin/keys/:id/revoke', authMiddleware, (req, res) => {
-    db.revokeLicense(req.params.id); res.json({ message: 'Key di-revoke' });
-});
-
-app.put('/api/admin/keys/:id/activate', authMiddleware, (req, res) => {
-    db.activateLicense(req.params.id); res.json({ message: 'Key diaktifkan' });
-});
-
-app.delete('/api/admin/keys/:id', authMiddleware, (req, res) => {
-    db.deleteLicense(req.params.id); res.json({ message: 'Key dihapus' });
-});
-
-app.put('/api/admin/keys/:id/renew', authMiddleware, (req, res) => {
-    const { days } = req.body;
-    db.renewLicense(req.params.id, parseInt(days));
-    res.json({ message: 'Key diperpanjang' });
-});
-
-app.get('/api/admin/keys/:id/details', authMiddleware, (req, res) => {
-    const d = db.getKeyDetails(req.params.id);
-    if (!d) return res.status(404).json({ error: 'Key tidak ditemukan' });
-    const serverUrl = db.getSetting('server_url') || `http://${getLocalIP()}:${PORT}`;
-    d.repo_url = `${serverUrl}/r/${d.license_key}/repo.json`;
-    res.json(d);
-});
-
-app.put('/api/admin/keys/:id/expiry', authMiddleware, (req, res) => {
-    db.updateLicenseExpiry(req.params.id, req.body.expiry_date);
-    res.json({ message: 'Expired date diperbarui' });
-});
-
-app.put('/api/admin/keys/:id/max-devices', authMiddleware, (req, res) => {
-    db.updateLicenseMaxDevices(req.params.id, req.body.max_devices);
-    res.json({ message: 'Max devices diperbarui' });
-});
-
-app.put('/api/admin/keys/:id/note', authMiddleware, (req, res) => {
-    db.updateLicenseNote(req.params.id, req.body.note);
-    res.json({ message: 'Catatan diperbarui' });
-});
-
-app.put('/api/admin/keys/:id/name', authMiddleware, (req, res) => {
-    db.updateLicenseName(req.params.id, req.body.name);
-    res.json({ message: 'Nama diperbarui' });
-});
-
-// Devices
-app.get('/api/admin/devices', authMiddleware, (req, res) => {
-    // Return online devices first, then recent offline
-    const online = db.getOnlineDevices();
-    const all = db.getAllDevicesRecent(20);
-    const onlineIds = new Set(online.map(d => d.id));
-    const offline = all.filter(d => !onlineIds.has(d.id));
-    res.json([...online, ...offline].slice(0, 20));
-});
-app.post('/api/admin/devices/:id/block', authMiddleware, (req, res) => {
-    db.blockDevice(req.params.id); res.json({ message: 'Device diblokir' });
-});
-
-app.post('/api/admin/devices/:id/unblock', authMiddleware, (req, res) => {
-    db.unblockDevice(req.params.id); res.json({ message: 'Device di-unblock' });
-});
-
-app.delete('/api/admin/devices/:id', authMiddleware, (req, res) => {
-    db.deleteDevice(req.params.id); res.json({ message: 'Device dihapus' });
-});
-
-// NEW: Rename device
-app.put('/api/admin/devices/:id/name', authMiddleware, (req, res) => {
-    db.renameDevice(req.params.id, req.body.name || '');
-    res.json({ message: 'Device renamed' });
-});
-
-app.get('/api/admin/online', authMiddleware, (req, res) => {
-    res.json(db.getOnlineDevices());
-});
-
-// Blocked IPs
-app.get('/api/admin/blocked-ips', authMiddleware, (req, res) => {
-    res.json(db.getBlockedIPs());
-});
-
-app.post('/api/admin/blocked-ips', authMiddleware, (req, res) => {
-    const { ip, reason } = req.body;
-    if (!ip) return res.status(400).json({ error: 'IP wajib diisi' });
-    db.blockIP(ip, reason);
-    res.json({ message: `IP ${ip} diblokir` });
-});
-
-app.delete('/api/admin/blocked-ips/:ip', authMiddleware, (req, res) => {
-    db.unblockIP(req.params.ip);
-    res.json({ message: 'IP di-unblock' });
-});
-
-// Logs
-app.get('/api/admin/logs', authMiddleware, (req, res) => {
-    const limit = parseInt(req.query.limit) || 50;
-    res.json(db.getRecentLogs(limit));
-});
-
-// NEW: Log search
-app.get('/api/admin/logs/search', authMiddleware, (req, res) => {
-    const { query, action, limit } = req.query;
-    res.json(db.searchLogs({
-        query: query || '',
-        action: action || '',
-        limit: parseInt(limit) || 100
-    }));
-});
-
-// NEW: Plugin stats
-app.get('/api/admin/plugin-stats', authMiddleware, (req, res) => {
-    res.json(db.getPluginStats());
-});
-
-// Backup Database
-app.get('/api/admin/backup', authMiddleware, (req, res) => {
-    const file = path.join(__dirname, 'premium.db');
-    if (!fs.existsSync(file)) return res.status(404).json({ error: 'Database file tidak ditemukan' });
-    res.download(file, `backup-premium-${new Date().toISOString().slice(0, 10)}.db`);
-});
-
-// Restore Database
-app.post('/api/admin/restore', authMiddleware, upload.single('database'), (req, res) => {
-    try {
-        if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-
-        const uploadedPath = req.file.path;
-        const dbPath = path.join(__dirname, 'premium.db');
-        const backupPath = path.join(__dirname, `premium-backup-${Date.now()}.db`);
-
-        // Create backup of current database first
-        if (fs.existsSync(dbPath)) {
-            fs.copyFileSync(dbPath, backupPath);
-        }
-
-        // Replace with uploaded file
-        fs.copyFileSync(uploadedPath, dbPath);
-        fs.unlinkSync(uploadedPath); // Clean temp file
-
-        res.json({ message: 'Database berhasil di-restore! Server akan restart dalam 3 detik...' });
-
-        // Restart server after response
-        setTimeout(() => {
-            const { exec } = require('child_process');
-            exec('pm2 restart cs-premium', (err) => {
-                if (err) console.error('PM2 restart error:', err);
-            });
-        }, 2000);
     } catch (e) {
-        console.error('Restore error:', e);
-        res.status(500).json({ error: 'Gagal restore: ' + e.message });
+        console.error('Plugins.json error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
     }
 });
 
-// Settings
+// ============================================================
+// ADMIN AUTH
+// ============================================================
+
+app.post('/api/auth/login', rateLimit(300000, 20), (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const ip = getClientIP(req);
+
+        if (!username || !password) {
+            return res.status(400).json({ status: 'error', message: 'Missing credentials' });
+        }
+
+        // Check if IP blocked
+        if (db.isIPBlocked(ip)) {
+            return res.status(403).json({ status: 'error', message: 'IP blocked' });
+        }
+
+        const admin = db.getAdminByUsername(username);
+        if (!admin || !bcrypt.compareSync(password, admin.password_hash)) {
+            db.recordFailedLogin(ip);
+            db.logAccess('', 'LOGIN_FAIL', ip, `username: ${username}`);
+            return res.status(401).json({ status: 'error', message: 'Invalid credentials' });
+        }
+
+        // Clear failed logins on success
+        db.clearFailedLogins(ip);
+
+        const token = jwt.sign({ id: admin.id, username: admin.username }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+        db.logAccess('', 'LOGIN_OK', ip, `admin: ${username}`);
+
+        res.json({ status: 'ok', token, username: admin.username });
+    } catch (e) {
+        console.error('Login error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// ============================================================
+// ADMIN — Dashboard
+// ============================================================
+
+app.get('/api/admin/dashboard', authMiddleware, (req, res) => {
+    try {
+        const stats = db.getDashboardStats();
+        res.json({ status: 'ok', ...stats });
+    } catch (e) {
+        console.error('Dashboard error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// ============================================================
+// ADMIN — License Management
+// ============================================================
+
+app.post('/api/admin/licenses', authMiddleware, (req, res) => {
+    try {
+        const { duration_days, name, note, max_devices, count } = req.body;
+        const ip = getClientIP(req);
+
+        if (count && count > 1) {
+            const keys = db.createBulkLicenses({
+                count: Math.min(count, 100),
+                durationDays: duration_days || 30,
+                maxDevices: max_devices || 2,
+                note: note || ''
+            });
+            db.logAccess('', 'BULK_CREATE', ip, `${keys.length} licenses created by ${req.admin.username}`);
+            return res.json({ status: 'ok', keys });
+        }
+
+        const result = db.createLicense({
+            durationDays: duration_days || 30,
+            name: name || '',
+            note: note || '',
+            maxDevices: max_devices || 2
+        });
+
+        db.logAccess(result.key, 'LICENSE_CREATE', ip, `by ${req.admin.username}`);
+        res.json({ status: 'ok', ...result });
+    } catch (e) {
+        console.error('Create license error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+app.get('/api/admin/licenses', authMiddleware, (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+        const search = cleanInput(req.query.search || '');
+        const status = cleanInput(req.query.status || '');
+        const trashed = req.query.trashed === 'true';
+
+        const result = db.getLicensesPaginated(page, limit, search, status, trashed);
+        res.json({ status: 'ok', ...result });
+    } catch (e) {
+        console.error('List licenses error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+app.get('/api/admin/licenses/:id/details', authMiddleware, (req, res) => {
+    try {
+        const details = db.getLicenseDetails(parseInt(req.params.id));
+        if (!details) return res.status(404).json({ status: 'error', message: 'Not found' });
+        res.json({ status: 'ok', ...details });
+    } catch (e) {
+        console.error('License details error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+app.put('/api/admin/licenses/:id', authMiddleware, (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const { name, note, max_devices, expires_at, status: newStatus, action } = req.body;
+        const ip = getClientIP(req);
+
+        if (action === 'revoke') {
+            db.updateLicenseStatus(id, 'revoked');
+            db.logAccess('', 'LICENSE_REVOKE', ip, `id:${id} by ${req.admin.username}`);
+        } else if (action === 'activate') {
+            db.updateLicenseStatus(id, 'active');
+            db.logAccess('', 'LICENSE_ACTIVATE', ip, `id:${id} by ${req.admin.username}`);
+        } else if (action === 'restore') {
+            db.restoreLicense(id);
+            db.logAccess('', 'LICENSE_RESTORE', ip, `id:${id} by ${req.admin.username}`);
+        } else {
+            db.updateLicense(id, {
+                name, note,
+                maxDevices: max_devices,
+                expiresAt: expires_at,
+                status: newStatus
+            });
+            db.logAccess('', 'LICENSE_UPDATE', ip, `id:${id} by ${req.admin.username}`);
+        }
+
+        res.json({ status: 'ok' });
+    } catch (e) {
+        console.error('Update license error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+app.delete('/api/admin/licenses/:id', authMiddleware, (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const force = req.query.force === 'true';
+        const ip = getClientIP(req);
+
+        if (force) {
+            db.forceDeleteLicense(id);
+            db.logAccess('', 'LICENSE_FORCE_DELETE', ip, `id:${id} by ${req.admin.username}`);
+        } else {
+            db.softDeleteLicense(id);
+            db.logAccess('', 'LICENSE_SOFT_DELETE', ip, `id:${id} by ${req.admin.username}`);
+        }
+
+        res.json({ status: 'ok' });
+    } catch (e) {
+        console.error('Delete license error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// ============================================================
+// ADMIN — Bulk License Operations
+// ============================================================
+
+app.post('/api/admin/licenses/bulk', authMiddleware, (req, res) => {
+    try {
+        const { ids, action } = req.body;
+        const ip = getClientIP(req);
+        if (!Array.isArray(ids) || !ids.length || !action) {
+            return res.status(400).json({ status: 'error', message: 'ids array and action required' });
+        }
+        const validActions = ['revoke', 'activate', 'delete', 'force_delete'];
+        if (!validActions.includes(action)) {
+            return res.status(400).json({ status: 'error', message: 'Invalid action' });
+        }
+        let processed = 0;
+        for (const id of ids.slice(0, 100)) {
+            const numId = parseInt(id);
+            if (isNaN(numId)) continue;
+            if (action === 'revoke') db.updateLicenseStatus(numId, 'revoked');
+            else if (action === 'activate') db.updateLicenseStatus(numId, 'active');
+            else if (action === 'delete') db.softDeleteLicense(numId);
+            else if (action === 'force_delete') db.forceDeleteLicense(numId);
+            processed++;
+        }
+        db.logAccess('', `BULK_${action.toUpperCase()}`, ip, `${processed} licenses by ${req.admin.username}`);
+        res.json({ status: 'ok', processed });
+    } catch (e) {
+        console.error('Bulk action error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// ============================================================
+// ADMIN — Device Management
+// ============================================================
+
+app.get('/api/admin/devices', authMiddleware, (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+        const search = cleanInput(req.query.search || '');
+
+        const result = db.getDevicesPaginated(page, limit, search);
+        res.json({ status: 'ok', ...result });
+    } catch (e) {
+        console.error('List devices error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+app.put('/api/admin/devices/:id', authMiddleware, (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const { action, name } = req.body;
+        const ip = getClientIP(req);
+
+        if (action === 'block') {
+            db.blockDevice(id);
+            db.logAccess('', 'DEVICE_BLOCK', ip, `device_id:${id} by ${req.admin.username}`);
+        } else if (action === 'unblock') {
+            db.unblockDevice(id);
+            db.logAccess('', 'DEVICE_UNBLOCK', ip, `device_id:${id} by ${req.admin.username}`);
+        } else if (action === 'rename') {
+            db.renameDevice(id, name || '');
+        } else if (action === 'delete') {
+            db.deleteDevice(id);
+            db.logAccess('', 'DEVICE_DELETE', ip, `device_id:${id} by ${req.admin.username}`);
+        }
+
+        res.json({ status: 'ok' });
+    } catch (e) {
+        console.error('Device action error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// ============================================================
+// ADMIN — Analytics
+// ============================================================
+
+app.get('/api/admin/plugin-usage', authMiddleware, (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+        const search = cleanInput(req.query.search || '');
+
+        const result = db.getPluginUsagePaginated(page, limit, search);
+        res.json({ status: 'ok', ...result });
+    } catch (e) {
+        console.error('Plugin usage error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+app.get('/api/admin/playback-logs', authMiddleware, (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+        const search = cleanInput(req.query.search || '');
+
+        const result = db.getPlaybackLogsPaginated(page, limit, search);
+        res.json({ status: 'ok', ...result });
+    } catch (e) {
+        console.error('Playback logs error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+app.get('/api/admin/logs', authMiddleware, (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+        const search = cleanInput(req.query.search || '');
+        const action = cleanInput(req.query.action || '');
+
+        const result = db.getAccessLogsPaginated(page, limit, search, action);
+        res.json({ status: 'ok', ...result });
+    } catch (e) {
+        console.error('Access logs error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// ============================================================
+// ADMIN — Enhanced Analytics
+// ============================================================
+
+// Real-time activity feed (last N minutes)
+app.get('/api/admin/activity-feed', authMiddleware, (req, res) => {
+    try {
+        const minutes = Math.min(parseInt(req.query.minutes) || 30, 1440);
+        const limit = Math.min(parseInt(req.query.limit) || 100, 500);
+
+        const pluginActivity = db.all(
+            `SELECT pu.license_key, pu.device_id, pu.plugin_name, pu.action, pu.ip_address, pu.used_at,
+                    l.name as license_name
+             FROM plugin_usage pu
+             LEFT JOIN licenses l ON pu.license_key = l.license_key
+             WHERE pu.used_at > datetime('now', '-${minutes} minutes')
+             ORDER BY pu.used_at DESC LIMIT ?`, [limit]
+        );
+
+        const playbackActivity = db.all(
+            `SELECT pl.license_key, pl.device_id, pl.plugin_name, pl.video_title, pl.source_provider, 
+                    pl.ip_address, pl.played_at,
+                    l.name as license_name
+             FROM playback_logs pl
+             LEFT JOIN licenses l ON pl.license_key = l.license_key
+             WHERE pl.played_at > datetime('now', '-${minutes} minutes')
+             ORDER BY pl.played_at DESC LIMIT ?`, [limit]
+        );
+
+        // Merge and sort by time
+        const feed = [
+            ...pluginActivity.map(a => ({ ...a, type: 'plugin', timestamp: a.used_at })),
+            ...playbackActivity.map(a => ({ ...a, type: 'playback', timestamp: a.played_at }))
+        ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, limit);
+
+        res.json({ status: 'ok', feed, count: feed.length });
+    } catch (e) {
+        console.error('Activity feed error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// Plugin breakdown statistics
+app.get('/api/admin/analytics/plugins', authMiddleware, (req, res) => {
+    try {
+        const days = Math.min(parseInt(req.query.days) || 7, 90);
+
+        // Usage by plugin
+        const byPlugin = db.all(
+            `SELECT plugin_name, action, COUNT(*) as count 
+             FROM plugin_usage 
+             WHERE used_at > datetime('now', '-${days} days')
+             GROUP BY plugin_name, action
+             ORDER BY count DESC`
+        );
+
+        // Unique users per plugin
+        const uniqueUsers = db.all(
+            `SELECT plugin_name, COUNT(DISTINCT license_key) as unique_users
+             FROM plugin_usage
+             WHERE used_at > datetime('now', '-${days} days')
+             GROUP BY plugin_name
+             ORDER BY unique_users DESC`
+        );
+
+        // Hourly activity pattern (last 24h)
+        const hourlyPattern = db.all(
+            `SELECT strftime('%H', used_at) as hour, COUNT(*) as count
+             FROM plugin_usage
+             WHERE used_at > datetime('now', '-1 day')
+             GROUP BY hour
+             ORDER BY hour`
+        );
+
+        // Most watched content
+        const topContent = db.all(
+            `SELECT video_title, plugin_name, COUNT(*) as play_count
+             FROM playback_logs
+             WHERE played_at > datetime('now', '-${days} days')
+             GROUP BY video_title, plugin_name
+             ORDER BY play_count DESC
+             LIMIT 20`
+        );
+
+        // Download statistics
+        const downloads = db.all(
+            `SELECT plugin_name, COUNT(*) as download_count
+             FROM playback_logs
+             WHERE source_provider = 'DOWNLOAD' AND played_at > datetime('now', '-${days} days')
+             GROUP BY plugin_name
+             ORDER BY download_count DESC`
+        );
+
+        // Daily trends (last N days)
+        const dailyTrends = db.all(
+            `SELECT date(used_at) as day, plugin_name, action, COUNT(*) as count
+             FROM plugin_usage
+             WHERE used_at > datetime('now', '-${days} days')
+             GROUP BY day, plugin_name, action
+             ORDER BY day DESC`
+        );
+
+        res.json({
+            status: 'ok',
+            byPlugin, uniqueUsers, hourlyPattern,
+            topContent, downloads, dailyTrends,
+            period: `${days} days`
+        });
+    } catch (e) {
+        console.error('Analytics plugins error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// Per-user activity
+app.get('/api/admin/analytics/user/:key', authMiddleware, (req, res) => {
+    try {
+        const key = req.params.key;
+        const days = Math.min(parseInt(req.query.days) || 7, 90);
+
+        const license = db.getLicenseByKey(key);
+        if (!license) return res.status(404).json({ status: 'error', message: 'License not found' });
+
+        const pluginUsage = db.all(
+            `SELECT plugin_name, action, COUNT(*) as count, MAX(used_at) as last_used
+             FROM plugin_usage
+             WHERE license_key = ? AND used_at > datetime('now', '-${days} days')
+             GROUP BY plugin_name, action
+             ORDER BY count DESC`, [key]
+        );
+
+        const playbackHistory = db.all(
+            `SELECT plugin_name, video_title, source_provider, played_at
+             FROM playback_logs
+             WHERE license_key = ? AND played_at > datetime('now', '-${days} days')
+             ORDER BY played_at DESC
+             LIMIT 100`, [key]
+        );
+
+        const devices = db.all(
+            `SELECT * FROM devices WHERE license_key = ?`, [key]
+        );
+
+        const recentLogs = db.all(
+            `SELECT * FROM access_logs
+             WHERE license_key = ?
+             ORDER BY created_at DESC LIMIT 50`, [key]
+        );
+
+        res.json({
+            status: 'ok',
+            license,
+            pluginUsage,
+            playbackHistory,
+            devices,
+            recentLogs,
+            period: `${days} days`
+        });
+    } catch (e) {
+        console.error('User analytics error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// Active sessions overview
+app.get('/api/admin/active-sessions', authMiddleware, (req, res) => {
+    try {
+        const sessions = [];
+        for (const [ip, session] of ipSessions) {
+            const lic = db.getLicenseByKey(session.key);
+            sessions.push({
+                ip,
+                license_key: session.key,
+                license_name: lic?.name || '',
+                status: lic?.status || 'unknown',
+                expires_at: new Date(session.expiresAt).toISOString(),
+                ttl_minutes: Math.round((session.expiresAt - Date.now()) / 60000)
+            });
+        }
+        res.json({ status: 'ok', sessions, count: sessions.length });
+    } catch (e) {
+        console.error('Active sessions error:', e.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// ============================================================
+// ADMIN — Security
+// ============================================================
+
+app.get('/api/admin/security/failed-logins', authMiddleware, (req, res) => {
+    try {
+        const logs = db.getFailedLogins();
+        res.json({ status: 'ok', logs });
+    } catch (e) {
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+app.get('/api/admin/security/blocked-ips', authMiddleware, (req, res) => {
+    try {
+        const ips = db.getBlockedIPs();
+        res.json({ status: 'ok', ips });
+    } catch (e) {
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+app.post('/api/admin/security/block-ip', authMiddleware, (req, res) => {
+    try {
+        const { ip, reason } = req.body;
+        if (!ip) return res.status(400).json({ status: 'error', message: 'IP required' });
+        db.blockIP(ip, reason || '');
+        db.logAccess('', 'IP_BLOCK', getClientIP(req), `blocked ${ip} by ${req.admin.username}`);
+        res.json({ status: 'ok' });
+    } catch (e) {
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+app.post('/api/admin/security/unblock-ip', authMiddleware, (req, res) => {
+    try {
+        const { ip } = req.body;
+        if (!ip) return res.status(400).json({ status: 'error', message: 'IP required' });
+        db.unblockIP(ip);
+        db.logAccess('', 'IP_UNBLOCK', getClientIP(req), `unblocked ${ip} by ${req.admin.username}`);
+        res.json({ status: 'ok' });
+    } catch (e) {
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// ============================================================
+// ADMIN — Settings
+// ============================================================
+
 app.get('/api/admin/settings', authMiddleware, (req, res) => {
-    const settings = {};
-    db.getAllSettings().forEach(s => settings[s.key] = s.value);
-    res.json(settings);
+    try {
+        const settings = db.getAllSettings();
+        const obj = {};
+        settings.forEach(s => { obj[s.key] = s.value; });
+        res.json({ status: 'ok', settings: obj });
+    } catch (e) {
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
 });
 
-app.post('/api/admin/settings', authMiddleware, (req, res) => {
-    if (req.body.server_url !== undefined) db.setSetting('server_url', req.body.server_url);
-    if (req.body.proxy_downloads !== undefined) db.setSetting('proxy_downloads', req.body.proxy_downloads ? 'true' : 'false');
-    res.json({ message: 'Settings disimpan' });
+app.put('/api/admin/settings', authMiddleware, (req, res) => {
+    try {
+        const { settings } = req.body;
+        if (settings && typeof settings === 'object') {
+            for (const [k, v] of Object.entries(settings)) {
+                db.setSetting(k, v);
+            }
+        }
+        db.logAccess('', 'SETTINGS_UPDATE', getClientIP(req), `by ${req.admin.username}`);
+        res.json({ status: 'ok' });
+    } catch (e) {
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
 });
 
 // ============================================================
-// START
+// ADMIN — Password Change
 // ============================================================
+
+app.put('/api/admin/password', authMiddleware, (req, res) => {
+    try {
+        const { current_password, new_password } = req.body;
+        if (!current_password || !new_password) {
+            return res.status(400).json({ status: 'error', message: 'Both passwords required' });
+        }
+        if (new_password.length < 6) {
+            return res.status(400).json({ status: 'error', message: 'Password must be at least 6 characters' });
+        }
+
+        const admin = db.getAdminByUsername(req.admin.username);
+        if (!bcrypt.compareSync(current_password, admin.password_hash)) {
+            return res.status(401).json({ status: 'error', message: 'Current password incorrect' });
+        }
+
+        const hash = bcrypt.hashSync(new_password, 12);
+        db.updateAdminPassword(admin.id, hash);
+        db.logAccess('', 'PASSWORD_CHANGE', getClientIP(req), `admin: ${req.admin.username}`);
+
+        res.json({ status: 'ok', message: 'Password updated' });
+    } catch (e) {
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// ============================================================
+// FALLBACK — SPA
+// ============================================================
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// ============================================================
+// GRACEFUL SHUTDOWN
+// ============================================================
+
+process.on('SIGINT', () => {
+    console.log('\nShutting down gracefully...');
+    process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+    console.log('\nShutting down gracefully...');
+    process.exit(0);
+});
+
+// ============================================================
+// START SERVER
+// ============================================================
+
 db.initDatabase().then(() => {
-    // Fetch plugins on startup
-    fetchAllPlugins('__startup__').catch(() => { });
-
+    const lanIP = getLocalIP();
     app.listen(PORT, '0.0.0.0', () => {
-        const ip = getLocalIP();
-        console.log(`
-╔════════════════════════════════════════════════════════╗
-║   CS Premium — Repo Proxy Gateway                      ║
-╠════════════════════════════════════════════════════════╣
-║   Dashboard : http://localhost:${PORT}                   ║
-║   LAN/Phone : http://${ip}:${PORT}                    ║
-║   Server URL: ${db.getSetting('server_url')}                               ║
-║                                                        ║
-║   Login: admin / admin123                              ║
-║   ⚠️  Ganti password default setelah login!             ║
-╚════════════════════════════════════════════════════════╝
-`);
+        console.log('');
+        console.log('  ╔══════════════════════════════════════════╗');
+        console.log('  ║   CloudStream Premium License Server     ║');
+        console.log('  ╠══════════════════════════════════════════╣');
+        console.log(`  ║  Local:    http://localhost:${PORT}          ║`);
+        console.log(`  ║  Network:  http://${lanIP}:${PORT}    ║`);
+        console.log('  ╚══════════════════════════════════════════╝');
+        console.log('');
     });
+}).catch(err => {
+    console.error('Failed to initialize database:', err);
+    process.exit(1);
 });

@@ -1,765 +1,183 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CS Premium — Admin Panel</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
+    <title>CloudStream Premium — Admin Dashboard</title>
+    <meta name="description" content="CloudStream Premium Licensing Platform Admin Dashboard">
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <div id="app-login" class="login-container">
+
+    <!-- LOGIN PAGE -->
+    <div id="loginPage" class="login-page">
         <div class="login-card">
             <div class="login-logo">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                </svg>
+                <h1>CloudStream Premium</h1>
+                <p>Admin Dashboard</p>
             </div>
-            <h1>CS Premium</h1>
-            <p>Repo Proxy Gateway — Admin Panel</p>
-            <div class="form-group"><label>Username</label><input type="text" id="login-user" placeholder="admin"
-                    autofocus></div>
-            <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••"
-                    onkeydown="if(event.key==='Enter')login()"></div>
-            <button class="btn btn-primary btn-full" onclick="login()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                    <polyline points="10 17 15 12 10 7" />
-                    <line x1="15" y1="12" x2="3" y2="12" />
-                </svg>
-                Login
-            </button>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" placeholder="admin" autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••" autocomplete="current-password"
+                        required>
+                </div>
+                <button type="submit" class="btn btn-primary"
+                    style="width:100%;justify-content:center;padding:11px;">Sign In</button>
+            </form>
         </div>
     </div>
 
-    <div id="app-main" class="hidden">
-        <div class="top-bar">
-            <div class="logo">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    <!-- MAIN APP LAYOUT -->
+    <div id="appLayout" class="app-layout hidden">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                    <path d="M2 17l10 5 10-5" />
+                    <path d="M2 12l10 5 10-5" />
                 </svg>
-                CS Premium Gateway
+                <h2>CS Premium</h2>
             </div>
-            <div class="actions">
-                <span id="server-url-display" style="font-size:12px;color:var(--muted)"></span>
-                <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()"
-                    title="Toggle dark mode"></button>
-                <button class="btn btn-ghost btn-sm" onclick="openPasswordModal()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path
-                            d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4" />
-                    </svg>
-                    Password
-                </button>
-                <button class="btn btn-ghost btn-sm" onclick="logout()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
+            <nav class="sidebar-nav">
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Overview</div>
+                    <div class="nav-item active" data-page="dashboard">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="9" />
+                            <rect x="14" y="3" width="7" height="5" />
+                            <rect x="14" y="12" width="7" height="9" />
+                            <rect x="3" y="16" width="7" height="5" />
+                        </svg>
+                        Dashboard
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Management</div>
+                    <div class="nav-item" data-page="licenses">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                        Licenses
+                    </div>
+                    <div class="nav-item" data-page="devices">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                            <line x1="12" y1="18" x2="12.01" y2="18" />
+                        </svg>
+                        Devices
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Analytics</div>
+                    <div class="nav-item" data-page="activity">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                        </svg>
+                        Live Activity
+                    </div>
+                    <div class="nav-item" data-page="sessions">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        Active Sessions
+                    </div>
+                    <div class="nav-item" data-page="plugins">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                        </svg>
+                        Plugin Usage
+                    </div>
+                    <div class="nav-item" data-page="playback">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="5 3 19 12 5 21 5 3" />
+                        </svg>
+                        Playback Logs
+                    </div>
+                    <div class="nav-item" data-page="logs">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                        </svg>
+                        Access Logs
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">System</div>
+                    <div class="nav-item" data-page="security">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                        Security
+                    </div>
+                    <div class="nav-item" data-page="settings">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3" />
+                            <path
+                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                        </svg>
+                        Settings
+                    </div>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="nav-item" id="logoutBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                         <polyline points="16 17 21 12 16 7" />
                         <line x1="21" y1="12" x2="9" y2="12" />
                     </svg>
                     Logout
-                </button>
-            </div>
-        </div>
-        <div class="tabs">
-            <div class="tab active" data-tab="dashboard">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="7" height="7" />
-                    <rect x="14" y="3" width="7" height="7" />
-                    <rect x="14" y="14" width="7" height="7" />
-                    <rect x="3" y="14" width="7" height="7" />
-                </svg>
-                Dashboard
-            </div>
-            <div class="tab" data-tab="repos">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <ellipse cx="12" cy="5" rx="9" ry="3" />
-                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
-                    <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" />
-                </svg>
-                Repos
-            </div>
-            <div class="tab" data-tab="keys">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path
-                        d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4" />
-                </svg>
-                License Keys
-            </div>
-            <div class="tab" data-tab="devices">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="4" y="4" width="16" height="16" rx="2" ry="2" />
-                    <rect x="9" y="9" width="6" height="6" />
-                    <line x1="9" y1="1" x2="9" y2="4" />
-                    <line x1="15" y1="1" x2="15" y2="4" />
-                    <line x1="9" y1="20" x2="9" y2="23" />
-                    <line x1="15" y1="20" x2="15" y2="23" />
-                    <line x1="20" y1="9" x2="23" y2="9" />
-                    <line x1="20" y1="14" x2="23" y2="14" />
-                    <line x1="1" y1="9" x2="4" y2="9" />
-                    <line x1="1" y1="14" x2="4" y2="14" />
-                </svg>
-                Devices & IPs
-            </div>
-            <div class="tab" data-tab="plugins">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                </svg>
-                Plugin Activity
-            </div>
-            <div class="tab" data-tab="logs">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="16" y1="13" x2="8" y2="13" />
-                    <line x1="16" y1="17" x2="8" y2="17" />
-                    <polyline points="10 9 9 9 8 9" />
-                </svg>
-                Logs
-            </div>
-            <div class="tab" data-tab="settings">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="3" />
-                    <path
-                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                </svg>
-                Settings
-            </div>
-        </div>
-
-        <div class="content">
-            <!-- DASHBOARD -->
-            <div id="tab-dashboard" class="tab-content active">
-                <div class="stats-grid" id="stats-grid"></div>
-                <div class="grid-2">
-                    <div class="section">
-                        <div class="section-title">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                <polyline points="14 2 14 8 20 8" />
-                                <line x1="16" y1="13" x2="8" y2="13" />
-                                <line x1="16" y1="17" x2="8" y2="17" />
-                            </svg>
-                            Recent Activity
-                        </div>
-                        <div class="table-wrap" style="max-height:400px;overflow-y:auto">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Time</th>
-                                        <th>Key</th>
-                                        <th>Action</th>
-                                        <th>Device</th>
-                                        <th>IP</th>
-                                        <th>Detail</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="recent-logs"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="section">
-                        <div class="section-title">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                                <line x1="8" y1="21" x2="16" y2="21" />
-                                <line x1="12" y1="17" x2="12" y2="21" />
-                            </svg>
-                            Active Devices
-                        </div>
-                        <div id="dashboard-devices" style="display:flex;flex-wrap:wrap;gap:8px">
-                            <p style="color:var(--muted);text-align:center;padding:20px;width:100%">Loading...</p>
-                        </div>
-                    </div>
-                    <div class="section">
-                        <div class="section-title">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                            </svg>
-                            Popular Plugins
-                        </div>
-                        <div id="popular-plugins">
-                            <p style="color:var(--muted);text-align:center;padding:20px">Loading...</p>
-                        </div>
-                    </div>
                 </div>
             </div>
+        </aside>
 
-            <!-- REPOS -->
-            <div id="tab-repos" class="tab-content">
-                <div class="section">
-                    <div class="section-header">
-                        <div>
-                            <div class="section-title">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <ellipse cx="12" cy="5" rx="9" ry="3" />
-                                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
-                                    <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" />
-                                </svg>
-                                Source Repos
-                            </div>
-                            <div class="section-subtitle">Add CloudStream repos for proxying</div>
-                        </div>
-                        <div style="display:flex;gap:8px">
-                            <button class="btn btn-ghost btn-sm" onclick="refreshRepos()">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="23 4 23 10 17 10" />
-                                    <polyline points="1 20 1 14 7 14" />
-                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                                </svg>
-                                Refresh Cache
-                            </button>
-                            <button class="btn btn-primary btn-sm" onclick="openAddRepoModal()">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="12" y1="5" x2="12" y2="19" />
-                                    <line x1="5" y1="12" x2="19" y2="12" />
-                                </svg>
-                                Add Repo
-                            </button>
-                        </div>
-                    </div>
-                    <div id="repo-list">
-                        <p style="color:var(--muted);text-align:center;padding:20px">Loading...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- KEYS -->
-            <div id="tab-keys" class="tab-content">
-                <div class="section">
-                    <div class="section-header">
-                        <div>
-                            <div
-                                style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
-                                <div>
-                                    <div class="section-title">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <path
-                                                d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4" />
-                                        </svg>
-                                        License Keys
-                                    </div>
-                                    <div class="section-subtitle">Click a key to view full details</div>
-                                </div>
-                                <div style="display:flex;gap:8px;align-items:center">
-                                    <div style="position:relative">
-                                        <input type="text" id="key-search" placeholder="Search key, name, note..."
-                                            style="padding:8px 30px 8px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:240px"
-                                            oninput="debounceKeySearch()">
-                                        <span id="search-clear-btn" onclick="clearSearch()"
-                                            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--muted);display:none;font-size:14px"
-                                            title="Clear search">&times;</span>
-                                    </div>
-                                    <button class="btn btn-ghost btn-sm" onclick="toggleTrashMode()" id="btn-trash-mode"
-                                        title="View Trash">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <polyline points="3 6 5 6 21 6" />
-                                            <path
-                                                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                        </svg>
-                                        Trash
-                                    </button>
-                                    <button class="btn btn-primary btn-sm" onclick="openGenModal()">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <line x1="12" y1="5" x2="12" y2="19" />
-                                            <line x1="5" y1="12" x2="19" y2="12" />
-                                        </svg>
-                                        Generate
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="table-wrap">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th style="width:40px;text-align:center"><input type="checkbox"
-                                                id="select-all-keys" onclick="toggleSelectAll()"></th>
-                                        <th>Key</th>
-                                        <th>Repo URL</th>
-                                        <th>Status</th>
-                                        <th>Duration / Remaining</th>
-                                        <th>Created</th>
-                                        <th>Expires</th>
-                                        <th>Devices</th>
-                                        <th>Note</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="keys-table"></tbody>
-                            </table>
-                        </div>
-                        <div id="keys-pagination" style="display:flex;justify-content:center;gap:8px;margin-top:16px">
-                        </div>
-
-                        <!-- FLOATING ACTION BAR -->
-                        <div id="bulk-actions" class="floating-bar">
-                            <span id="selected-count" style="font-weight:600;margin-right:16px">0 Selected</span>
-                            <div style="display:flex;gap:8px">
-                                <button class="btn btn-sm btn-danger" onclick="confirmBulkDelete()">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="3 6 5 6 21 6" />
-                                        <path
-                                            d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                    </svg>
-                                    Delete
-                                </button>
-                                <button class="btn btn-sm btn-warning" onclick="promptBulkRenew()">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="12" cy="12" r="10" />
-                                        <polyline points="12 6 12 12 16 14" />
-                                    </svg>
-                                    Renew
-                                </button>
-                                <button class="btn btn-sm btn-ghost" onclick="bulkRestore()" id="btn-bulk-restore"
-                                    style="display:none">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="1 4 1 10 7 10" />
-                                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-                                    </svg>
-                                    Restore
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-            <!-- DEVICES & IPs -->
-            <div id="tab-devices" class="tab-content">
-                <div class="section">
-                    <div class="section-header">
-                        <div>
-                            <div class="section-title"><span class="pulse"></span> Online Devices</div>
-                            <div class="section-subtitle">Devices active in the last 5 minutes</div>
-                        </div>
-                        <button class="btn btn-ghost btn-sm" onclick="loadDevicesTab()">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="23 4 23 10 17 10" />
-                                <polyline points="1 20 1 14 7 14" />
-                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                            </svg>
-                            Refresh
-                        </button>
-                    </div>
-                    <div id="online-list">
-                        <p style="color:var(--muted);text-align:center;padding:20px">Loading...</p>
-                    </div>
-                </div>
-                <div class="section">
-                    <div class="section-header">
-                        <div>
-                            <div class="section-title">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10" />
-                                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-                                </svg>
-                                Blocked IPs
-                            </div>
-                            <div class="section-subtitle">Blocked IPs cannot access any repo</div>
-                        </div>
-                    </div>
-                    <div style="display:flex;gap:8px;margin-bottom:16px">
-                        <input type="text" id="block-ip-input" placeholder="Enter IP address" style="flex:1">
-                        <input type="text" id="block-ip-reason" placeholder="Reason (optional)" style="flex:1">
-                        <button class="btn btn-danger btn-sm" onclick="addBlockedIP()">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10" />
-                                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-                            </svg>
-                            Block IP
-                        </button>
-                    </div>
-                    <div id="blocked-list"></div>
-                </div>
-            </div>
-
-            <!-- PLUGIN ACTIVITY -->
-            <div id="tab-plugins" class="tab-content">
-                <div class="grid-2">
-                    <div class="section">
-                        <div class="section-title">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="18" y1="20" x2="18" y2="10" />
-                                <line x1="12" y1="20" x2="12" y2="4" />
-                                <line x1="6" y1="20" x2="6" y2="14" />
-                            </svg>
-                            Most Popular Plugins
-                        </div>
-                        <div class="section-subtitle" style="margin-bottom:16px">Based on total download and access
-                            activity</div>
-                        <div id="plugin-stats-popular">
-                            <p style="color:var(--muted);text-align:center;padding:20px">Loading...</p>
-                        </div>
-                    </div>
-                    <div class="section">
-                        <div class="section-title">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10" />
-                                <polyline points="12 6 12 12 16 14" />
-                            </svg>
-                            Recent Plugin Activity
-                        </div>
-                        <div class="section-subtitle" style="margin-bottom:16px">Last 30 activities from all users</div>
-                        <div id="plugin-stats-recent">
-                            <p style="color:var(--muted);text-align:center;padding:20px">Loading...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- LOGS -->
-            <div id="tab-logs" class="tab-content">
-                <div class="section">
-                    <div class="section-header">
-                        <div class="section-title">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                <polyline points="14 2 14 8 20 8" />
-                                <line x1="16" y1="13" x2="8" y2="13" />
-                                <line x1="16" y1="17" x2="8" y2="17" />
-                            </svg>
-                            Access Logs
-                        </div>
-                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                            <input type="text" id="log-search-input" placeholder="Search key, IP, detail..."
-                                style="width:220px;padding:8px 12px;font-size:12px" oninput="debounceSearch()">
-                            <select id="log-action-filter" style="width:140px;padding:8px;font-size:12px"
-                                onchange="searchLogsFilter()">
-                                <option value="">All Actions</option>
-                                <option value="VALID">VALID</option>
-                                <option value="REPO_ACCESS">REPO_ACCESS</option>
-                                <option value="DOWNLOAD">DOWNLOAD</option>
-                                <option value="PLUGIN_OPEN">PLUGIN_OPEN</option>
-                                <option value="PLUGIN_CHECK">PLUGIN_CHECK</option>
-                                <option value="INVALID_KEY">INVALID_KEY</option>
-                                <option value="REVOKED">REVOKED</option>
-                                <option value="EXPIRED">EXPIRED</option>
-                                <option value="BLOCKED_IP">BLOCKED_IP</option>
-                                <option value="MAX_DEVICES">MAX_DEVICES</option>
-                                <option value="DEVICE_BLOCKED">DEVICE_BLOCKED</option>
-                                <option value="DOWNLOAD_ERROR">DOWNLOAD_ERROR</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="table-wrap" style="max-height:600px;overflow-y:auto">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Time</th>
-                                    <th>Key</th>
-                                    <th>Action</th>
-                                    <th>IP</th>
-                                    <th>Detail</th>
-                                </tr>
-                            </thead>
-                            <tbody id="all-logs"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SETTINGS -->
-            <div id="tab-settings" class="tab-content">
-                <div class="section">
-                    <div class="section-title">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="3" />
-                            <path
-                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                        </svg>
-                        Server Settings
-                    </div>
-                    <div class="section-subtitle" style="margin-top:4px;margin-bottom:16px">Public server URL — used to
-                        generate user repo links</div>
-                    <div class="form-group"><label>Server URL</label><input type="text" id="setting-server-url"
-                            placeholder="http://your-vps-ip:3000"></div>
-                    <div class="form-group"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input
-                                type="checkbox" id="setting-proxy" style="width:auto"> Proxy Downloads (route .cs3
-                            through server)</label></div>
-                    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Make sure the URL is accessible from
-                        the internet</p>
-                    <button class="btn btn-primary" onclick="saveSettings()">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                            <polyline points="17 21 17 13 7 13 7 21" />
-                            <polyline points="7 3 7 8 15 8" />
-                        </svg>
-                        Save
-                    </button>
-                    <hr style="border:0;border-top:1px solid var(--border);margin:24px 0">
-                    <div class="section-title">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <ellipse cx="12" cy="5" rx="9" ry="3" />
-                            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
-                            <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" />
-                        </svg>
-                        Database
-                    </div>
-                    <div class="section-subtitle" style="margin-bottom:16px">Download backup or restore from a .db file
-                    </div>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap">
-                        <button class="btn btn-ghost" onclick="downloadBackup()">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                <polyline points="7 10 12 15 17 10" />
-                                <line x1="12" y1="15" x2="12" y2="3" />
-                            </svg>
-                            Download Backup
-                        </button>
-                        <button class="btn btn-warning" onclick="triggerUpload()">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                <polyline points="17 8 12 3 7 8" />
-                                <line x1="12" y1="3" x2="12" y2="15" />
-                            </svg>
-                            Upload & Restore
-                        </button>
-                        <input type="file" id="db-upload-input" accept=".db" style="display:none"
-                            onchange="uploadRestore(this)">
-                    </div>
-                    <p style="font-size:11px;color:var(--muted);margin-top:8px">Upload will replace the entire database.
-                        Server restarts automatically.</p>
-                </div>
-                <div class="section">
-                    <div class="section-title">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                            <line x1="12" y1="17" x2="12.01" y2="17" />
-                        </svg>
-                        How to Use
-                    </div>
-                    <div style="font-size:13px;color:var(--muted);line-height:2;margin-top:8px">
-                        1. Add a source repo in the <strong>Repos</strong> tab<br>
-                        2. Generate a key in the <strong>License Keys</strong> tab<br>
-                        3. Copy the <strong>Repo URL</strong> from the key and give it to the user<br>
-                        4. User pastes the URL in CloudStream &rarr; Settings &rarr; Extensions &rarr; Add
-                        Repository<br>
-                        5. Monitor devices and IPs in the <strong>Devices & IPs</strong> tab<br>
-                        6. Monitor plugin usage in the <strong>Plugin Activity</strong> tab<br>
-                        7. Expired key = URL automatically dies<br>
-                        8. Device over limit = automatically rejected
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <header class="main-header">
+                <h1 id="pageTitle">Dashboard</h1>
+                <div class="header-actions" id="headerActions"></div>
+            </header>
+            <div class="page-content" id="pageContent"></div>
+        </main>
     </div>
 
-    <!-- MODALS -->
-    <div id="modal-add-repo" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
-        <div class="modal">
-            <h2>Add Source Repo</h2>
-            <p class="subtitle">Enter the URL of a CloudStream extension repo</p>
-            <div class="form-group"><label>Repo Name</label><input type="text" id="repo-name"
-                    placeholder="e.g. ExtCloud"></div>
-            <div class="form-group"><label>URL</label><input type="text" id="repo-url"
-                    placeholder="https://github.com/duro92/ExtCloud"></div>
-            <div class="modal-actions"><button class="btn btn-ghost"
-                    onclick="closeModal('modal-add-repo')">Cancel</button><button class="btn btn-primary"
-                    onclick="addRepo()">Add Repo</button></div>
-        </div>
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- MODAL OVERLAY -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modalContent"></div>
     </div>
 
-    <div id="modal-gen" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
-        <div class="modal">
-            <h2>Generate License Key</h2>
-            <p class="subtitle">Create a new key — each key gets a unique repo URL</p>
-
-            <div class="form-group"><label>Name (Optional)</label><input type="text" id="gen-name"
-                    placeholder="User Name / Reference"></div>
-
-            <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-                <div class="form-group"><label>Duration</label><select id="gen-duration">
-                        <option value="7">7 Days</option>
-                        <option value="30" selected>30 Days (1 Month)</option>
-                        <option value="90">90 Days (3 Months)</option>
-                        <option value="180">180 Days (6 Months)</option>
-                        <option value="365">365 Days (1 Year)</option>
-                    </select></div>
-                <div class="form-group"><label>Max Devices</label><select id="gen-maxdev">
-                        <option value="1">1 Device</option>
-                        <option value="2" selected>2 Devices</option>
-                        <option value="3">3 Devices</option>
-                        <option value="5">5 Devices</option>
-                        <option value="10">10 Devices</option>
-                    </select></div>
-            </div>
-
-            <div class="form-group"><label>Number of Keys</label><select id="gen-count">
-                    <option value="1" selected>1 Key</option>
-                    <option value="5">5 Keys</option>
-                    <option value="10">10 Keys</option>
-                    <option value="25">25 Keys</option>
-                </select></div>
-
-            <div class="form-group"><label>Internal Note (Optional)</label><textarea id="gen-note"
-                    placeholder="Admin notes..." style="resize:vertical;min-height:60px"></textarea>
-            </div>
-
-            <div id="gen-result"></div>
-            <div class="modal-actions"><button class="btn btn-ghost"
-                    onclick="closeModal('modal-gen')">Cancel</button><button class="btn btn-primary"
-                    onclick="genKey()">Generate Key</button></div>
-        </div>
-    </div>
-
-    <!-- CUSTOM CONFIRM MODAL -->
-    <div id="modal-confirm" class="modal-overlay" style="z-index:9999">
-        <div class="modal" style="max-width:400px;text-align:center">
-            <div style="margin-bottom:16px">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path
-                        d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                    <line x1="12" y1="9" x2="12" y2="13" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-            </div>
-            <h2 id="confirm-title" style="margin-bottom:8px">Confirm</h2>
-            <p id="confirm-msg" style="color:var(--muted);margin-bottom:24px">Are you sure?</p>
-            <div class="modal-actions" style="justify-content:center">
-                <button class="btn btn-ghost" onclick="closeConfirm(false)">Cancel</button>
-                <button class="btn btn-danger" id="confirm-yes-btn">Yes, Delete</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-renew" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
-        <div class="modal">
-            <h2>Renew Key</h2>
-            <div class="form-group"><label>Add Days</label><select id="renew-days">
-                    <option value="7">7 Days</option>
-                    <option value="30" selected>30 Days</option>
-                    <option value="90">90 Days</option>
-                    <option value="180">180 Days</option>
-                    <option value="365">365 Days</option>
-                </select></div>
-            <input type="hidden" id="renew-id">
-            <div class="modal-actions"><button class="btn btn-ghost"
-                    onclick="closeModal('modal-renew')">Cancel</button><button class="btn btn-primary"
-                    onclick="renewKey()">Renew</button></div>
-        </div>
-    </div>
-
-    <div id="modal-password" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
-        <div class="modal">
-            <h2>Change Password</h2>
-            <div class="form-group"><label>New Password (min 6 characters)</label><input type="password" id="new-pass"
-                    placeholder="••••••••"></div>
-            <div class="modal-actions"><button class="btn btn-ghost"
-                    onclick="closeModal('modal-password')">Cancel</button><button class="btn btn-primary"
-                    onclick="changePass()">Save</button></div>
-        </div>
-    </div>
-
-    <!-- KEY DETAIL MODAL (full-screen) -->
-    <div id="modal-key-detail" class="modal-overlay" onclick="if(event.target===this)closeKeyDetail()">
-        <div class="modal modal-large">
-            <div class="modal-detail-header">
-                <h2 id="detail-modal-title">License Detail</h2>
-                <button class="btn btn-ghost btn-sm" onclick="closeKeyDetail()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                    Close
-                </button>
-            </div>
-            <div class="detail-tabs">
-                <div class="detail-tab active" data-dtab="overview" onclick="switchDetailTab('overview')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="20" x2="18" y2="10" />
-                        <line x1="12" y1="20" x2="12" y2="4" />
-                        <line x1="6" y1="20" x2="6" y2="14" />
-                    </svg>
-                    Overview
-                </div>
-                <div class="detail-tab" data-dtab="devices" onclick="switchDetailTab('devices')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-                        <line x1="12" y1="18" x2="12.01" y2="18" />
-                    </svg>
-                    Devices
-                </div>
-                <div class="detail-tab" data-dtab="activity" onclick="switchDetailTab('activity')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <polyline points="14 2 14 8 20 8" />
-                    </svg>
-                    Activity Log
-                </div>
-                <div class="detail-tab" data-dtab="plugin-usage" onclick="switchDetailTab('plugin-usage')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                    </svg>
-                    Plugin Usage
-                </div>
-                <div class="detail-tab" data-dtab="edit" onclick="switchDetailTab('edit')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
-                    Edit
-                </div>
-            </div>
-            <div id="detail-modal-content">
-                <p style="color:var(--muted);padding:30px;text-align:center">Loading...</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="toast-container" id="toasts"></div>
-    <script src="app.js?v=4"></script>
+    <script src="app.js?v=3"></script>
 </body>
 
 </html>

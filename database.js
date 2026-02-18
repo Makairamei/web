@@ -1,3 +1,8 @@
+// ============================================================
+// CloudStream Premium — Database Layer
+// Production-grade SQLite with sql.js (pure JS)
+// ============================================================
+
 const initSqlJs = require('sql.js');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
@@ -7,66 +12,151 @@ const fs = require('fs');
 const DB_PATH = path.join(__dirname, 'premium.db');
 let db;
 
+// ============================================================
+// sql.js HELPER — synchronous-like wrapper
+// ============================================================
+
+function run(sql, params = []) {
+    db.run(sql, params);
+    saveDB();
+}
+
+function get(sql, params = []) {
+    const stmt = db.prepare(sql);
+    stmt.bind(params);
+    let result = null;
+    if (stmt.step()) {
+        result = stmt.getAsObject();
+    }
+    stmt.free();
+    return result;
+}
+
+function all(sql, params = []) {
+    const stmt = db.prepare(sql);
+    stmt.bind(params);
+    const results = [];
+    while (stmt.step()) {
+        results.push(stmt.getAsObject());
+    }
+    stmt.free();
+    return results;
+}
+
+function saveDB() {
+    try {
+        const data = db.export();
+        const buffer = Buffer.from(data);
+        fs.writeFileSync(DB_PATH, buffer);
+    } catch (e) {
+        console.error('DB save error:', e.message);
+    }
+}
+
+// Debounced save for batch operations
+let saveTimer = null;
+function debouncedSave() {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveDB, 500);
+}
+
+function runNoSave(sql, params = []) {
+    db.run(sql, params);
+}
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
+
 async function initDatabase() {
     const SQL = await initSqlJs();
+
+    // Load existing DB or create new
     if (fs.existsSync(DB_PATH)) {
-        db = new SQL.Database(fs.readFileSync(DB_PATH));
+        const fileBuffer = fs.readFileSync(DB_PATH);
+        db = new SQL.Database(fileBuffer);
     } else {
         db = new SQL.Database();
     }
 
-    db.run(`CREATE TABLE IF NOT EXISTS admin (
+    // Enable foreign keys
+    db.run("PRAGMA foreign_keys = ON");
+
+    // --- SCHEMA ---
+
+    db.run(`CREATE TABLE IF NOT EXISTS admins (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT (datetime('now'))
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS licenses (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         license_key TEXT UNIQUE NOT NULL,
+        name TEXT DEFAULT '',
+        status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','revoked','expired')),
+        expires_at DATETIME NOT NULL,
         max_devices INTEGER NOT NULL DEFAULT 2,
-        duration_days INTEGER NOT NULL DEFAULT 30,
-        expired_at DATETIME NOT NULL,
-        is_active INTEGER NOT NULL DEFAULT 1,
         note TEXT DEFAULT '',
         deleted_at DATETIME DEFAULT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT (datetime('now'))
     )`);
 
-    // Migration: Add deleted_at if missing
-    try {
-        db.run("ALTER TABLE licenses ADD COLUMN deleted_at DATETIME DEFAULT NULL");
-    } catch (e) { /* ignore if exists */ }
-
-    // Migration: Auto-name unnamed devices
-    try {
-        const keys = queryAll("SELECT DISTINCT license_key FROM devices WHERE (device_name IS NULL OR device_name = '') AND (device_model IS NULL OR device_model = '' OR device_model LIKE '%Unknown%')");
-        keys.forEach(row => {
-            const devices = queryAll("SELECT id FROM devices WHERE license_key = ? ORDER BY first_seen ASC", [row.license_key]);
-            devices.forEach((dev, idx) => {
-                const name = `Device ${idx + 1}`;
-                db.run("UPDATE devices SET device_name = ?, device_model = ? WHERE id = ? AND (device_name IS NULL OR device_name = '')", [name, name, dev.id]);
-            });
-        });
-        if (keys.length > 0) saveDb();
-    } catch (e) { /* ignore */ }
-
-    db.run(`CREATE TABLE IF NOT EXISTS repos (
+    db.run(`CREATE TABLE IF NOT EXISTS devices (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        url TEXT NOT NULL,
-        is_active INTEGER NOT NULL DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        license_key TEXT NOT NULL,
+        device_id TEXT NOT NULL,
+        device_name TEXT DEFAULT '',
+        ip_address TEXT DEFAULT '',
+        is_blocked INTEGER DEFAULT 0,
+        first_seen DATETIME DEFAULT (datetime('now')),
+        last_seen DATETIME DEFAULT (datetime('now')),
+        UNIQUE(license_key, device_id)
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS plugin_usage (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        license_key TEXT NOT NULL,
+        device_id TEXT DEFAULT '',
+        plugin_name TEXT NOT NULL,
+        action TEXT DEFAULT 'OPEN',
+        ip_address TEXT DEFAULT '',
+        used_at DATETIME DEFAULT (datetime('now'))
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS playback_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        license_key TEXT NOT NULL,
+        device_id TEXT DEFAULT '',
+        plugin_name TEXT NOT NULL,
+        video_title TEXT NOT NULL,
+        source_provider TEXT DEFAULT '',
+        ip_address TEXT DEFAULT '',
+        played_at DATETIME DEFAULT (datetime('now'))
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS access_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        license_key TEXT NOT NULL,
+        license_key TEXT DEFAULT '',
         action TEXT NOT NULL,
-        ip_address TEXT,
+        ip_address TEXT DEFAULT '',
         details TEXT DEFAULT '',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT (datetime('now'))
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS failed_logins (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ip_address TEXT NOT NULL,
+        attempt_count INTEGER DEFAULT 1,
+        last_attempt DATETIME DEFAULT (datetime('now'))
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS blocked_ips (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ip_address TEXT UNIQUE NOT NULL,
+        reason TEXT DEFAULT '',
+        created_at DATETIME DEFAULT (datetime('now'))
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS settings (
@@ -74,598 +164,440 @@ async function initDatabase() {
         value TEXT NOT NULL
     )`);
 
-    // Enhanced devices table
-    db.run(`CREATE TABLE IF NOT EXISTS devices (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        license_key TEXT NOT NULL,
-        device_id TEXT NOT NULL,
-        ip_address TEXT NOT NULL,
-        user_agent TEXT DEFAULT '',
-        device_name TEXT DEFAULT '',
-        device_model TEXT DEFAULT '',
-        os_info TEXT DEFAULT '',
-        is_blocked INTEGER NOT NULL DEFAULT 0,
-        first_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
-        last_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(license_key, device_id)
-    )`);
+    // --- INDEXES ---
+    db.run(`CREATE INDEX IF NOT EXISTS idx_licenses_key ON licenses(license_key)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_licenses_status ON licenses(status)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_devices_key ON devices(license_key)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_devices_device ON devices(device_id)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_plugin_usage_key ON plugin_usage(license_key)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_playback_key ON playback_logs(license_key)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_access_logs_key ON access_logs(license_key)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_blocked_ips ON blocked_ips(ip_address)`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS blocked_ips (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ip_address TEXT UNIQUE NOT NULL,
-        reason TEXT DEFAULT '',
-        blocked_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`);
-
-    // NEW: Plugin activity tracking
-    db.run(`CREATE TABLE IF NOT EXISTS plugin_activity (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        license_key TEXT NOT NULL,
-        plugin_name TEXT NOT NULL,
-        action TEXT NOT NULL,
-        ip_address TEXT DEFAULT '',
-        device_id TEXT DEFAULT '',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`);
-
-    // Migration: add new columns to existing devices table
-    try { db.run("ALTER TABLE devices ADD COLUMN device_name TEXT DEFAULT ''"); } catch (_) { }
-    try { db.run("ALTER TABLE devices ADD COLUMN device_model TEXT DEFAULT ''"); } catch (_) { }
-    try { db.run("ALTER TABLE devices ADD COLUMN os_info TEXT DEFAULT ''"); } catch (_) { }
-
-    // Migration: Add name column to licenses if not exists
-    try { db.run("ALTER TABLE licenses ADD COLUMN name TEXT DEFAULT ''"); } catch (_) { }
-
-    // Migration: Add data column to plugin_activity if not exists
-    try { db.run("ALTER TABLE plugin_activity ADD COLUMN data TEXT DEFAULT ''"); } catch (_) { }
-
-    // Default admin
-    const adminCount = queryOne("SELECT COUNT(*) as c FROM admin");
+    // --- DEFAULT ADMIN ---
+    const adminCount = get('SELECT COUNT(*) as c FROM admins');
     if (!adminCount || adminCount.c === 0) {
-        const hash = bcrypt.hashSync('admin123', 10);
-        db.run("INSERT INTO admin (username, password_hash) VALUES (?, ?)", ['admin', hash]);
-        console.log('✅ Default admin: admin / admin123');
+        const hash = bcrypt.hashSync('admin123', 12);
+        run('INSERT INTO admins (username, password_hash) VALUES (?, ?)', ['admin', hash]);
+        console.log('  Default admin created: admin / admin123');
     }
 
-    // Default settings
+    // --- DEFAULT SETTINGS ---
     if (!getSetting('server_url')) setSetting('server_url', 'http://localhost:3000');
 
-    saveDb();
-    console.log('✅ Database initialized');
+    saveDB();
+    console.log('  Database initialized');
 }
 
-function saveDb() {
-    fs.writeFileSync(DB_PATH, Buffer.from(db.export()));
-}
+// ============================================================
+// SETTINGS
+// ============================================================
 
-function queryOne(sql, params = []) {
-    const stmt = db.prepare(sql); stmt.bind(params);
-    let row = null;
-    if (stmt.step()) {
-        const cols = stmt.getColumnNames(), vals = stmt.get();
-        row = {}; cols.forEach((c, i) => row[c] = vals[i]);
-    }
-    stmt.free(); return row;
-}
-
-function queryAll(sql, params = []) {
-    const stmt = db.prepare(sql); stmt.bind(params);
-    const rows = [];
-    while (stmt.step()) {
-        const cols = stmt.getColumnNames(), vals = stmt.get();
-        const row = {}; cols.forEach((c, i) => row[c] = vals[i]);
-        rows.push(row);
-    }
-    stmt.free(); return rows;
-}
-
-// ============== SETTINGS ==============
 function getSetting(key) {
-    const row = queryOne("SELECT value FROM settings WHERE key = ?", [key]);
+    const row = get('SELECT value FROM settings WHERE key = ?', [key]);
     return row ? row.value : null;
 }
+
 function setSetting(key, value) {
-    const existing = getSetting(key);
-    if (existing !== null) {
-        db.run("UPDATE settings SET value = ? WHERE key = ?", [value, key]);
-    } else {
-        db.run("INSERT INTO settings (key, value) VALUES (?, ?)", [key, value]);
-    }
-    saveDb();
+    run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', [key, String(value)]);
 }
+
 function getAllSettings() {
-    return queryAll("SELECT * FROM settings");
+    return all('SELECT * FROM settings');
 }
 
-// ============== REPOS ==============
-function addRepo(name, url) {
-    db.run("INSERT INTO repos (name, url) VALUES (?, ?)", [name, url]);
-    saveDb();
-    return queryOne("SELECT * FROM repos ORDER BY id DESC LIMIT 1");
-}
-function getAllRepos() {
-    return queryAll("SELECT * FROM repos ORDER BY created_at DESC");
-}
-function toggleRepo(id, active) {
-    db.run("UPDATE repos SET is_active = ? WHERE id = ?", [active ? 1 : 0, id]);
-    saveDb();
-}
-function deleteRepo(id) {
-    db.run("DELETE FROM repos WHERE id = ?", [id]);
-    saveDb();
-}
-function getActiveRepos() {
-    return queryAll("SELECT * FROM repos WHERE is_active = 1");
-}
+// ============================================================
+// LICENSE KEY GENERATION
+// ============================================================
 
-// ============== LICENSES ==============
 function generateKey(prefix = 'CS') {
-    // Get next sequential number
-    const countRow = queryOne("SELECT COUNT(*) as c FROM licenses");
-    const num = (countRow ? countRow.c : 0) + 1;
-    const numStr = String(num).padStart(2, '0');
-    const seg = [];
-    for (let i = 0; i < 3; i++) seg.push(crypto.randomBytes(2).toString('hex').toUpperCase());
-    return `${prefix}-${numStr}-${seg.join('-')}`;
+    const seg = () => crypto.randomBytes(2).toString('hex').toUpperCase();
+    return `${prefix}-${seg()}-${seg()}-${seg()}-${seg()}`;
 }
 
-function createLicense({ durationDays = 30, note = '', name = '', maxDevices = 2 }) {
+// ============================================================
+// LICENSE CRUD
+// ============================================================
+
+function createLicense({ durationDays = 30, name = '', note = '', maxDevices = 2 }) {
     const key = generateKey();
-    const exp = new Date();
-    exp.setDate(exp.getDate() + durationDays);
-    db.run("INSERT INTO licenses (license_key, duration_days, expired_at, note, name, max_devices) VALUES (?, ?, ?, ?, ?, ?)",
-        [key, durationDays, exp.toISOString(), note, name, maxDevices]);
-    saveDb();
-    return { license_key: key, duration_days: durationDays, expired_at: exp.toISOString(), note, name, max_devices: maxDevices };
+    const expiresAt = new Date(Date.now() + durationDays * 86400000).toISOString();
+    run(`INSERT INTO licenses (license_key, name, status, expires_at, max_devices, note) VALUES (?, ?, 'active', ?, ?, ?)`,
+        [key, name, expiresAt, maxDevices, note]);
+    return { key, expires_at: expiresAt };
 }
 
-function createBulkLicenses({ count = 1, durationDays = 30, note = '', maxDevices = 2 }) {
-    const licenses = [];
+function createBulkLicenses({ count = 1, durationDays = 30, maxDevices = 2, note = '' }) {
+    const keys = [];
+    const expiresAt = new Date(Date.now() + durationDays * 86400000).toISOString();
     for (let i = 0; i < count; i++) {
         const key = generateKey();
-        const exp = new Date();
-        exp.setDate(exp.getDate() + durationDays);
-        db.run("INSERT INTO licenses (license_key, duration_days, expired_at, note, max_devices) VALUES (?, ?, ?, ?, ?)",
-            [key, durationDays, exp.toISOString(), note, maxDevices]);
-        licenses.push({ license_key: key, duration_days: durationDays, expired_at: exp.toISOString(), note, max_devices: maxDevices });
+        runNoSave(`INSERT INTO licenses (license_key, name, status, expires_at, max_devices, note) VALUES (?, '', 'active', ?, ?, ?)`,
+            [key, expiresAt, maxDevices, note]);
+        keys.push(key);
     }
-    saveDb();
-    return licenses;
+    saveDB();
+    return keys;
 }
 
-function getAllLicenses() {
-    return getLicensesPaginated(1, 100000, '', false).data; // Fallback for legacy calls, explicitly not trashed
-}
-
-// Pagination with Soft Delete Support
-function getLicensesPaginated(page = 1, limit = 20, search = '', trashed = false) {
+function getLicensesPaginated(page = 1, limit = 20, search = '', status = '', trashed = false) {
     const offset = (page - 1) * limit;
-    let whereClause = trashed ? "WHERE deleted_at IS NOT NULL" : "WHERE deleted_at IS NULL";
+    let whereClauses = [];
     let params = [];
 
-    if (search) {
-        let term = search.trim();
-        // Extract key from Repo URL if pasted
-        if (term.includes('/r/')) {
-            const match = term.match(/\/r\/([^/]+)/);
-            if (match) term = match[1];
-        }
-        whereClause += " AND (license_key LIKE ? OR name LIKE ? OR note LIKE ?)";
-        const like = `%${term}%`;
-        params.push(like, like, like);
+    if (trashed) {
+        whereClauses.push('deleted_at IS NOT NULL');
+    } else {
+        whereClauses.push('deleted_at IS NULL');
     }
 
-    const countSql = `SELECT COUNT(*) as total FROM licenses ${whereClause}`;
-    const total = queryOne(countSql, params)?.total || 0;
+    if (search) {
+        whereClauses.push("(license_key LIKE ? OR name LIKE ? OR note LIKE ?)");
+        params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
 
-    const sql = `SELECT * FROM licenses ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`;
-    const licenses = queryAll(sql, [...params, limit, offset]);
+    if (status) {
+        whereClauses.push('status = ?');
+        params.push(status);
+    }
 
-    const data = licenses.map(l => {
-        const deviceCount = queryOne("SELECT COUNT(*) as c FROM devices WHERE license_key = ? AND is_blocked = 0", [l.license_key]);
-        const onlineCount = queryOne("SELECT COUNT(*) as c FROM devices WHERE license_key = ? AND is_blocked = 0 AND last_seen >= datetime('now', '-5 minutes')", [l.license_key]);
-        return {
-            ...l,
-            device_count: deviceCount ? deviceCount.c : 0,
-            online_count: onlineCount ? onlineCount.c : 0
-        };
+    const where = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+    const total = get(`SELECT COUNT(*) as c FROM licenses ${where}`, params);
+    const rows = all(`SELECT * FROM licenses ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
+
+    // Attach device count
+    rows.forEach(r => {
+        const dc = get('SELECT COUNT(*) as c FROM devices WHERE license_key = ?', [r.license_key]);
+        r.device_count = dc?.c || 0;
     });
 
-    return { data, total, page, limit, total_pages: Math.ceil(total / limit) };
+    return { licenses: rows, total: total?.c || 0, page, limit };
 }
 
 function getLicenseByKey(key) {
-    // Only return active (non-deleted) keys for validation
-    return queryOne("SELECT * FROM licenses WHERE license_key = ? AND deleted_at IS NULL", [key]);
+    return get('SELECT * FROM licenses WHERE license_key = ? AND deleted_at IS NULL', [key]);
 }
 
-function revokeLicense(id) {
-    db.run("UPDATE licenses SET is_active = 0 WHERE id = ?", [id]);
-    saveDb();
+function getLicenseById(id) {
+    return get('SELECT * FROM licenses WHERE id = ?', [id]);
 }
 
-function activateLicense(id) {
-    db.run("UPDATE licenses SET is_active = 1 WHERE id = ?", [id]);
-    saveDb();
+function updateLicenseStatus(id, status) {
+    run('UPDATE licenses SET status = ? WHERE id = ?', [status, id]);
 }
 
-function deleteLicense(id) {
-    // Soft Delete
-    db.run("UPDATE licenses SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?", [id]);
-    saveDb();
+function updateLicense(id, { name, note, maxDevices, expiresAt, status }) {
+    const fields = [];
+    const params = [];
+    if (name !== undefined) { fields.push('name = ?'); params.push(name); }
+    if (note !== undefined) { fields.push('note = ?'); params.push(note); }
+    if (maxDevices !== undefined) { fields.push('max_devices = ?'); params.push(maxDevices); }
+    if (expiresAt !== undefined) { fields.push('expires_at = ?'); params.push(expiresAt); }
+    if (status !== undefined) { fields.push('status = ?'); params.push(status); }
+    if (fields.length === 0) return;
+    params.push(id);
+    run(`UPDATE licenses SET ${fields.join(', ')} WHERE id = ?`, params);
+}
+
+function softDeleteLicense(id) {
+    run("UPDATE licenses SET deleted_at = datetime('now') WHERE id = ?", [id]);
 }
 
 function restoreLicense(id) {
-    db.run("UPDATE licenses SET deleted_at = NULL WHERE id = ?", [id]);
-    saveDb();
+    run('UPDATE licenses SET deleted_at = NULL WHERE id = ?', [id]);
 }
 
 function forceDeleteLicense(id) {
-    // Hard Delete
-    const lic = queryOne("SELECT license_key FROM licenses WHERE id = ?", [id]);
-    if (lic) {
-        // Clean up related data
-        db.run("DELETE FROM devices WHERE license_key = ?", [lic.license_key]);
-        db.run("DELETE FROM access_logs WHERE license_key = ?", [lic.license_key]);
-        db.run("DELETE FROM plugin_activity WHERE license_key = ?", [lic.license_key]);
-    }
-    db.run("DELETE FROM licenses WHERE id = ?", [id]);
-    saveDb();
-}
-
-function emptyTrash() {
-    const deleted = queryAll("SELECT license_key FROM licenses WHERE deleted_at IS NOT NULL");
-    deleted.forEach(l => {
-        db.run("DELETE FROM devices WHERE license_key = ?", [l.license_key]);
-        db.run("DELETE FROM access_logs WHERE license_key = ?", [l.license_key]);
-        db.run("DELETE FROM plugin_activity WHERE license_key = ?", [l.license_key]);
-    });
-    db.run("DELETE FROM licenses WHERE deleted_at IS NOT NULL");
-    saveDb();
-}
-
-function renewLicense(id, additionalDays) {
-    const lic = queryOne("SELECT * FROM licenses WHERE id = ?", [id]);
+    const lic = getLicenseById(id);
     if (!lic) return;
-    const cur = new Date(lic.expired_at);
-    const now = new Date();
-    const base = cur > now ? cur : now;
-    base.setDate(base.getDate() + additionalDays);
-    db.run("UPDATE licenses SET expired_at = ?, is_active = 1 WHERE id = ?", [base.toISOString(), id]);
-    saveDb();
+    runNoSave('DELETE FROM devices WHERE license_key = ?', [lic.license_key]);
+    runNoSave('DELETE FROM plugin_usage WHERE license_key = ?', [lic.license_key]);
+    runNoSave('DELETE FROM playback_logs WHERE license_key = ?', [lic.license_key]);
+    runNoSave('DELETE FROM access_logs WHERE license_key = ?', [lic.license_key]);
+    run('DELETE FROM licenses WHERE id = ?', [id]);
 }
 
-function updateLicenseExpiry(id, newExpiryDate) {
-    db.run("UPDATE licenses SET expired_at = ? WHERE id = ?", [newExpiryDate, id]);
-    saveDb();
-}
-
-function updateLicenseMaxDevices(id, maxDevices) {
-    db.run("UPDATE licenses SET max_devices = ? WHERE id = ?", [maxDevices, id]);
-    saveDb();
-}
-
-function updateLicenseNote(id, note) {
-    db.run("UPDATE licenses SET note = ? WHERE id = ?", [note, id]);
-    saveDb();
-}
-
-function updateLicenseName(id, name) {
-    db.run("UPDATE licenses SET name = ? WHERE id = ?", [name, id]);
-    saveDb();
-}
-
-function getKeyDetails(id) {
-    const lic = queryOne("SELECT * FROM licenses WHERE id = ?", [id]);
+function getLicenseDetails(id) {
+    const lic = getLicenseById(id);
     if (!lic) return null;
-    const devices = queryAll("SELECT * FROM devices WHERE license_key = ? ORDER BY last_seen DESC", [lic.license_key]);
-    const recentLogs = queryAll("SELECT * FROM access_logs WHERE license_key = ? ORDER BY created_at DESC LIMIT 50", [lic.license_key]);
-    const pluginUsage = queryAll(`
-        SELECT plugin_name, action, COUNT(*) as count, MAX(created_at) as last_used 
-        FROM plugin_activity WHERE license_key = ? 
-        GROUP BY plugin_name, action ORDER BY last_used DESC LIMIT 30
-    `, [lic.license_key]);
-    const deviceCount = devices.filter(d => !d.is_blocked).length;
-    const onlineDevices = devices.filter(d => !d.is_blocked && (new Date() - new Date(d.last_seen)) < 5 * 60 * 1000);
-    return {
-        ...lic,
-        devices,
-        recent_logs: recentLogs,
-        plugin_usage: pluginUsage,
-        device_count: deviceCount,
-        online_count: onlineDevices.length
-    };
+    const devices = all('SELECT * FROM devices WHERE license_key = ? ORDER BY last_seen DESC', [lic.license_key]);
+    const recentLogs = all('SELECT * FROM access_logs WHERE license_key = ? ORDER BY created_at DESC LIMIT 50', [lic.license_key]);
+    const pluginUsage = all('SELECT * FROM plugin_usage WHERE license_key = ? ORDER BY used_at DESC LIMIT 50', [lic.license_key]);
+    const playbackLogs = all('SELECT * FROM playback_logs WHERE license_key = ? ORDER BY played_at DESC LIMIT 50', [lic.license_key]);
+    return { ...lic, devices, recentLogs, pluginUsage, playbackLogs };
 }
 
-// ============== USER-AGENT PARSER ==============
-function parseUserAgent(ua) {
-    if (!ua) return { model: '', os: '' };
-    let model = '', os = '';
+// ============================================================
+// LICENSE VALIDATION
+// ============================================================
 
-    // Android detection
-    const androidMatch = ua.match(/Android\s+([\d.]+)/);
-    if (androidMatch) os = `Android ${androidMatch[1]}`;
-
-    // Device model from Build/
-    const buildMatch = ua.match(/;\s*([^;)]+)\s*Build\//);
-    if (buildMatch) model = buildMatch[1].trim();
-
-    // Samsung
-    if (!model && ua.includes('SM-')) { const m = ua.match(/(SM-[A-Z0-9]+)/); if (m) model = m[1]; }
-
-    // iOS
-    const iosMatch = ua.match(/iPhone OS ([\d_]+)/);
-    if (iosMatch) { os = `iOS ${iosMatch[1].replace(/_/g, '.')}`; model = 'iPhone'; }
-    const ipadMatch = ua.match(/iPad.*OS ([\d_]+)/);
-    if (ipadMatch) { os = `iPadOS ${ipadMatch[1].replace(/_/g, '.')}`; model = 'iPad'; }
-
-    // Windows/Mac/Linux
-    if (!os && ua.includes('Windows')) os = 'Windows';
-    if (!os && ua.includes('Macintosh')) os = 'macOS';
-    if (!os && ua.includes('Linux')) os = 'Linux';
-
-    // CloudStream specific
-    if (ua.includes('CloudStream')) model = model || 'CloudStream App';
-
-    return { model: model || 'Unknown', os: os || 'Unknown' };
-}
-
-// ============== DEVICE TRACKING ==============
-function registerDevice(key, ip, userAgent = '', explicitDeviceId = null) {
-    let deviceId = explicitDeviceId;
-    if (!deviceId) {
-        deviceId = crypto.createHash('md5').update(ip + '|' + (userAgent || '')).digest('hex').substring(0, 16);
-    }
-
-    const existing = queryOne("SELECT * FROM devices WHERE license_key = ? AND device_id = ?", [key, deviceId]);
-    const parsed = parseUserAgent(userAgent);
-
-    if (existing) {
-        db.run("UPDATE devices SET last_seen = datetime('now'), ip_address = ?, device_model = ?, os_info = ? WHERE id = ?",
-            [ip, parsed.model || existing.device_model, parsed.os || existing.os_info, existing.id]);
-        saveDb();
-        return { registered: true, device: { ...existing, device_model: parsed.model, os_info: parsed.os }, isNew: false };
-    }
+function validateLicense(key, ip = '', deviceId = '', deviceName = '') {
+    // Check IP block
+    const blocked = get('SELECT 1 as b FROM blocked_ips WHERE ip_address = ?', [ip]);
+    if (blocked) return { valid: false, reason: 'ip_blocked' };
 
     const lic = getLicenseByKey(key);
-    if (!lic) return { registered: false, reason: 'INVALID_KEY' };
+    if (!lic) return { valid: false, reason: 'not_found' };
+    if (lic.status === 'revoked') return { valid: false, reason: 'revoked' };
 
-    const activeDeviceCount = queryOne("SELECT COUNT(*) as c FROM devices WHERE license_key = ? AND is_blocked = 0", [key]);
-    const count = activeDeviceCount ? activeDeviceCount.c : 0;
-
-    if (lic.max_devices > 0 && count >= lic.max_devices) {
-        return { registered: false, reason: 'MAX_DEVICES', current: count, max: lic.max_devices };
+    // Check / auto-expire
+    const now = new Date();
+    const expiry = new Date(lic.expires_at);
+    if (now > expiry) {
+        if (lic.status !== 'expired') {
+            run("UPDATE licenses SET status = 'expired' WHERE id = ?", [lic.id]);
+        }
+        return { valid: false, reason: 'expired', license: lic };
     }
 
-    const autoName = parsed.model || `Device ${count + 1}`;
-    db.run("INSERT INTO devices (license_key, device_id, ip_address, user_agent, device_name, device_model, os_info) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [key, deviceId, ip, userAgent || '', autoName, autoName, parsed.os || 'CloudStream']);
-    saveDb();
-    const newDevice = queryOne("SELECT * FROM devices WHERE license_key = ? AND device_id = ?", [key, deviceId]);
-    return { registered: true, device: newDevice, isNew: true };
+    // Device handling
+    if (deviceId) {
+        const existing = get('SELECT * FROM devices WHERE license_key = ? AND device_id = ?', [key, deviceId]);
+        if (existing) {
+            if (existing.is_blocked) return { valid: false, reason: 'device_blocked' };
+            run("UPDATE devices SET last_seen = datetime('now'), ip_address = ? WHERE id = ?", [ip, existing.id]);
+        } else {
+            // Check device limit
+            const count = get('SELECT COUNT(*) as c FROM devices WHERE license_key = ?', [key]);
+            if (lic.max_devices > 0 && (count?.c || 0) >= lic.max_devices) {
+                return { valid: false, reason: 'max_devices', license: lic };
+            }
+            run('INSERT INTO devices (license_key, device_id, device_name, ip_address) VALUES (?, ?, ?, ?)', [key, deviceId, deviceName, ip]);
+        }
+    }
+
+    const daysLeft = Math.ceil((expiry - now) / 86400000);
+    return { valid: true, license: lic, daysLeft };
 }
 
-function getDevicesForKey(key) {
-    return queryAll("SELECT * FROM devices WHERE license_key = ? ORDER BY last_seen DESC", [key]);
+// ============================================================
+// DEVICE MANAGEMENT
+// ============================================================
+
+function getDevicesPaginated(page = 1, limit = 20, search = '') {
+    const offset = (page - 1) * limit;
+    let where = '';
+    let params = [];
+    if (search) {
+        where = 'WHERE d.device_id LIKE ? OR d.device_name LIKE ? OR d.license_key LIKE ? OR d.ip_address LIKE ?';
+        params = [`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`];
+    }
+    const total = get(`SELECT COUNT(*) as c FROM devices d ${where}`, params);
+    const rows = all(`SELECT d.*, l.name as license_name, l.status as license_status FROM devices d LEFT JOIN licenses l ON d.license_key = l.license_key ${where} ORDER BY d.last_seen DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
+    return { devices: rows, total: total?.c || 0, page, limit };
 }
 
-function getDeviceCount(key) {
-    const r = queryOne("SELECT COUNT(*) as c FROM devices WHERE license_key = ? AND is_blocked = 0", [key]);
-    return r ? r.c : 0;
+function blockDevice(id) {
+    run('UPDATE devices SET is_blocked = 1 WHERE id = ?', [id]);
 }
 
-function blockDevice(deviceId) {
-    db.run("UPDATE devices SET is_blocked = 1 WHERE id = ?", [deviceId]);
-    saveDb();
+function unblockDevice(id) {
+    run('UPDATE devices SET is_blocked = 0 WHERE id = ?', [id]);
 }
 
-function unblockDevice(deviceId) {
-    db.run("UPDATE devices SET is_blocked = 0 WHERE id = ?", [deviceId]);
-    saveDb();
+function deleteDevice(id) {
+    run('DELETE FROM devices WHERE id = ?', [id]);
 }
 
-function deleteDevice(deviceId) {
-    db.run("DELETE FROM devices WHERE id = ?", [deviceId]);
-    saveDb();
+function renameDevice(id, name) {
+    run('UPDATE devices SET device_name = ? WHERE id = ?', [name, id]);
 }
 
-function renameDevice(deviceId, name) {
-    db.run("UPDATE devices SET device_name = ? WHERE id = ?", [name, deviceId]);
-    saveDb();
+// ============================================================
+// PLUGIN USAGE TRACKING
+// ============================================================
+
+function trackPluginUsage(licenseKey, deviceId, pluginName, action, ip) {
+    run('INSERT INTO plugin_usage (license_key, device_id, plugin_name, action, ip_address) VALUES (?, ?, ?, ?, ?)', [licenseKey, deviceId, pluginName, action || 'OPEN', ip]);
 }
 
-function getOnlineDevices() {
-    return queryAll(`
-        SELECT d.*, l.note as license_note, l.expired_at, l.is_active as license_active
-        FROM devices d
-        JOIN licenses l ON l.license_key = d.license_key
-        WHERE d.is_blocked = 0 AND d.last_seen >= datetime('now', '-5 minutes')
-        ORDER BY d.last_seen DESC
-    `);
+function getPluginUsagePaginated(page = 1, limit = 50, search = '') {
+    const offset = (page - 1) * limit;
+    let where = '';
+    let params = [];
+    if (search) {
+        where = 'WHERE plugin_name LIKE ? OR license_key LIKE ? OR action LIKE ?';
+        params = [`%${search}%`, `%${search}%`, `%${search}%`];
+    }
+    const total = get(`SELECT COUNT(*) as c FROM plugin_usage ${where}`, params);
+    const rows = all(`SELECT * FROM plugin_usage ${where} ORDER BY used_at DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
+    return { logs: rows, total: total?.c || 0, page, limit };
 }
 
-function getAllDevicesRecent(limit = 20) {
-    return queryAll("SELECT * FROM devices ORDER BY last_seen DESC LIMIT ?", [limit]);
+// ============================================================
+// PLAYBACK TRACKING
+// ============================================================
+
+function trackPlayback(licenseKey, deviceId, pluginName, videoTitle, sourceProvider, ip) {
+    run('INSERT INTO playback_logs (license_key, device_id, plugin_name, video_title, source_provider, ip_address) VALUES (?, ?, ?, ?, ?, ?)', [licenseKey, deviceId, pluginName, videoTitle, sourceProvider || '', ip]);
 }
 
-// ============== IP BLOCKING ==============
+function getPlaybackLogsPaginated(page = 1, limit = 50, search = '') {
+    const offset = (page - 1) * limit;
+    let where = '';
+    let params = [];
+    if (search) {
+        where = 'WHERE video_title LIKE ? OR plugin_name LIKE ? OR source_provider LIKE ? OR license_key LIKE ?';
+        params = [`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`];
+    }
+    const total = get(`SELECT COUNT(*) as c FROM playback_logs ${where}`, params);
+    const rows = all(`SELECT * FROM playback_logs ${where} ORDER BY played_at DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
+    return { logs: rows, total: total?.c || 0, page, limit };
+}
+
+// ============================================================
+// ACCESS LOGS
+// ============================================================
+
+function logAccess(key, action, ip = '', details = '') {
+    run('INSERT INTO access_logs (license_key, action, ip_address, details) VALUES (?, ?, ?, ?)', [key || '', action, ip, details]);
+}
+
+function getAccessLogsPaginated(page = 1, limit = 50, search = '', action = '') {
+    const offset = (page - 1) * limit;
+    let whereClauses = [];
+    let params = [];
+    if (search) {
+        whereClauses.push('(license_key LIKE ? OR details LIKE ? OR ip_address LIKE ?)');
+        params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+    if (action) {
+        whereClauses.push('action = ?');
+        params.push(action);
+    }
+    const where = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
+    const total = get(`SELECT COUNT(*) as c FROM access_logs ${where}`, params);
+    const rows = all(`SELECT * FROM access_logs ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
+    return { logs: rows, total: total?.c || 0, page, limit };
+}
+
+// ============================================================
+// SECURITY — FAILED LOGINS
+// ============================================================
+
+function recordFailedLogin(ip) {
+    const existing = get('SELECT * FROM failed_logins WHERE ip_address = ?', [ip]);
+    if (existing) {
+        run("UPDATE failed_logins SET attempt_count = attempt_count + 1, last_attempt = datetime('now') WHERE id = ?", [existing.id]);
+        if (existing.attempt_count + 1 >= 5) {
+            blockIP(ip, 'Brute force: too many failed login attempts');
+        }
+    } else {
+        run('INSERT INTO failed_logins (ip_address) VALUES (?)', [ip]);
+    }
+}
+
+function clearFailedLogins(ip) {
+    run('DELETE FROM failed_logins WHERE ip_address = ?', [ip]);
+}
+
+function getFailedLogins() {
+    return all('SELECT * FROM failed_logins ORDER BY last_attempt DESC LIMIT 100');
+}
+
+// ============================================================
+// SECURITY — IP BLOCKING
+// ============================================================
+
 function blockIP(ip, reason = '') {
-    const existing = queryOne("SELECT * FROM blocked_ips WHERE ip_address = ?", [ip]);
-    if (existing) return existing;
-    db.run("INSERT INTO blocked_ips (ip_address, reason) VALUES (?, ?)", [ip, reason]);
-    saveDb();
-    return queryOne("SELECT * FROM blocked_ips WHERE ip_address = ?", [ip]);
+    try {
+        run('INSERT OR IGNORE INTO blocked_ips (ip_address, reason) VALUES (?, ?)', [ip, reason]);
+    } catch (_) { }
 }
 
 function unblockIP(ip) {
-    db.run("DELETE FROM blocked_ips WHERE ip_address = ?", [ip]);
-    saveDb();
+    run('DELETE FROM blocked_ips WHERE ip_address = ?', [ip]);
 }
 
 function getBlockedIPs() {
-    return queryAll("SELECT * FROM blocked_ips ORDER BY blocked_at DESC");
+    return all('SELECT * FROM blocked_ips ORDER BY created_at DESC');
 }
 
 function isIPBlocked(ip) {
-    const row = queryOne("SELECT id FROM blocked_ips WHERE ip_address = ?", [ip]);
-    return !!row;
+    if (ip === '127.0.0.1' || ip === '::1' || ip === 'localhost') return false;
+    return !!get('SELECT 1 as b FROM blocked_ips WHERE ip_address = ?', [ip]);
 }
 
-// ============== KEY VALIDATION (ENHANCED) ==============
-function validateKey(key, ipAddress = '', userAgent = '', deviceId = null) {
-    if (ipAddress && isIPBlocked(ipAddress)) {
-        logAccess(key, 'BLOCKED_IP', ipAddress, 'IP is globally blocked');
-        return { valid: false, reason: 'BLOCKED_IP' };
-    }
+// ============================================================
+// ADMIN AUTH
+// ============================================================
 
-    const lic = getLicenseByKey(key);
-    if (!lic) {
-        logAccess(key, 'INVALID_KEY', ipAddress);
-        return { valid: false, reason: 'INVALID_KEY' };
-    }
-    if (!lic.is_active) {
-        logAccess(key, 'REVOKED', ipAddress);
-        return { valid: false, reason: 'REVOKED' };
-    }
-    if (new Date() > new Date(lic.expired_at)) {
-        logAccess(key, 'EXPIRED', ipAddress);
-        return { valid: false, reason: 'EXPIRED' };
-    }
-
-    let deviceResult = null;
-    if (ipAddress) {
-        deviceResult = registerDevice(key, ipAddress, userAgent, deviceId);
-        if (!deviceResult.registered) {
-            if (deviceResult.reason === 'MAX_DEVICES') {
-                logAccess(key, 'MAX_DEVICES', ipAddress, `Limit: ${deviceResult.max}, Current: ${deviceResult.current}`);
-                return { valid: false, reason: 'MAX_DEVICES', current: deviceResult.current, max: deviceResult.max };
-            }
-        }
-        if (deviceResult.registered && deviceResult.device && deviceResult.device.is_blocked) {
-            logAccess(key, 'DEVICE_BLOCKED', ipAddress, `Device ${deviceResult.device.device_id} is blocked`);
-            return { valid: false, reason: 'DEVICE_BLOCKED' };
-        }
-    }
-
-    // Don't log VALID here — caller logs meaningful access (REPO_ACCESS, DOWNLOAD, etc.)
-    return { valid: true, license: lic, device: deviceResult?.device || null };
+function getAdminByUsername(username) {
+    return get('SELECT * FROM admins WHERE username = ?', [username]);
 }
 
-// ============== LOGS ==============
-function logAccess(key, action, ip = '', details = '') {
-    db.run("INSERT INTO access_logs (license_key, action, ip_address, details) VALUES (?, ?, ?, ?)",
-        [key, action, ip, details]);
-    saveDb();
-}
-function getRecentLogs(limit = 50) {
-    return queryAll(`
-        SELECT al.*, 
-            COALESCE(d.device_name, d.device_model, 'Unknown') as device_name,
-            l.name as license_name
-        FROM access_logs al
-        LEFT JOIN devices d ON d.license_key = al.license_key AND d.ip_address = al.ip_address
-        LEFT JOIN licenses l ON l.license_key = al.license_key
-        ORDER BY al.created_at DESC LIMIT ?
-    `, [limit]);
-}
-function getLogsForKey(key, limit = 50) {
-    return queryAll("SELECT * FROM access_logs WHERE license_key = ? ORDER BY created_at DESC LIMIT ?", [key, limit]);
+function updateAdminPassword(id, newHash) {
+    run('UPDATE admins SET password_hash = ? WHERE id = ?', [newHash, id]);
 }
 
-// NEW: Search/filter logs
-function searchLogs({ query = '', action = '', limit = 100 } = {}) {
-    let sql = "SELECT * FROM access_logs WHERE 1=1";
-    const params = [];
-    if (query) {
-        sql += " AND (license_key LIKE ? OR ip_address LIKE ? OR details LIKE ?)";
-        const q = `%${query}%`;
-        params.push(q, q, q);
-    }
-    if (action) {
-        sql += " AND action = ?";
-        params.push(action);
-    }
-    sql += " ORDER BY created_at DESC LIMIT ?";
-    params.push(limit);
-    return queryAll(sql, params);
-}
+// ============================================================
+// DASHBOARD STATISTICS
+// ============================================================
 
-// ============== PLUGIN ACTIVITY ==============
-function logPluginActivity(key, pluginName, action, ip = '', deviceId = '', data = '') {
-    db.run("INSERT INTO plugin_activity (license_key, plugin_name, action, ip_address, device_id, data) VALUES (?, ?, ?, ?, ?, ?)",
-        [key, pluginName, action, ip, deviceId, data]);
-    saveDb();
-}
+function getDashboardStats() {
+    const totalLicenses = get("SELECT COUNT(*) as c FROM licenses WHERE deleted_at IS NULL")?.c || 0;
+    const activeLicenses = get("SELECT COUNT(*) as c FROM licenses WHERE status = 'active' AND deleted_at IS NULL")?.c || 0;
+    const expiredLicenses = get("SELECT COUNT(*) as c FROM licenses WHERE status = 'expired' AND deleted_at IS NULL")?.c || 0;
+    const revokedLicenses = get("SELECT COUNT(*) as c FROM licenses WHERE status = 'revoked' AND deleted_at IS NULL")?.c || 0;
+    const totalDevices = get("SELECT COUNT(*) as c FROM devices")?.c || 0;
+    const activeDevices = get("SELECT COUNT(*) as c FROM devices WHERE last_seen > datetime('now', '-1 hour')")?.c || 0;
+    const totalPluginEvents = get("SELECT COUNT(*) as c FROM plugin_usage")?.c || 0;
+    const totalPlaybacks = get("SELECT COUNT(*) as c FROM playback_logs")?.c || 0;
+    const todayPluginEvents = get("SELECT COUNT(*) as c FROM plugin_usage WHERE used_at > datetime('now', '-1 day')")?.c || 0;
+    const todayPlaybacks = get("SELECT COUNT(*) as c FROM playback_logs WHERE played_at > datetime('now', '-1 day')")?.c || 0;
 
-function getPluginActivity(key, limit = 50) {
-    return queryAll("SELECT * FROM plugin_activity WHERE license_key = ? ORDER BY created_at DESC LIMIT ?", [key, limit]);
-}
+    // Top plugins (last 7 days)
+    const topPlugins = all("SELECT plugin_name, COUNT(*) as count FROM plugin_usage WHERE used_at > datetime('now', '-7 days') GROUP BY plugin_name ORDER BY count DESC LIMIT 10");
 
-function getPluginStats() {
-    const popular = queryAll(`
-        SELECT plugin_name, COUNT(*) as total, 
-        SUM(CASE WHEN action='DOWNLOAD' THEN 1 ELSE 0 END) as downloads,
-        SUM(CASE WHEN action='OPEN' THEN 1 ELSE 0 END) as opens,
-        SUM(CASE WHEN action='SEARCH' THEN 1 ELSE 0 END) as searches,
-        SUM(CASE WHEN action='LOAD' THEN 1 ELSE 0 END) as loads,
-        SUM(CASE WHEN action='PLAY' THEN 1 ELSE 0 END) as plays,
-        COUNT(DISTINCT license_key) as unique_users
-        FROM plugin_activity GROUP BY plugin_name ORDER BY total DESC LIMIT 20
-    `);
-    const recent = queryAll(`
-        SELECT pa.*, 
-            l.note as license_note, l.name as license_name,
-            COALESCE(d.device_name, d.device_model, 'Unknown') as device_name
-        FROM plugin_activity pa
-        LEFT JOIN licenses l ON l.license_key = pa.license_key
-        LEFT JOIN devices d ON d.license_key = pa.license_key AND d.device_id = pa.device_id
-        ORDER BY pa.created_at DESC LIMIT 30
-    `);
-    return { popular, recent };
-}
+    // Top source providers (last 7 days)
+    const topSources = all("SELECT source_provider, COUNT(*) as count FROM playback_logs WHERE played_at > datetime('now', '-7 days') AND source_provider != '' GROUP BY source_provider ORDER BY count DESC LIMIT 10");
 
-// ============== ADMIN ==============
-function verifyAdmin(username, password) {
-    const admin = queryOne("SELECT * FROM admin WHERE username = ?", [username]);
-    if (!admin) return null;
-    if (!bcrypt.compareSync(password, admin.password_hash)) return null;
-    return { id: admin.id, username: admin.username };
-}
-function changeAdminPassword(username, newPassword) {
-    const hash = bcrypt.hashSync(newPassword, 10);
-    db.run("UPDATE admin SET password_hash = ? WHERE username = ?", [hash, username]);
-    saveDb();
-}
+    // Recent activity
+    const recentActivity = all("SELECT * FROM access_logs ORDER BY created_at DESC LIMIT 20");
 
-// ============== STATS (ENHANCED) ==============
-function getStats() {
+    // Blocked IPs count
+    const blockedIPs = get("SELECT COUNT(*) as c FROM blocked_ips")?.c || 0;
+
     return {
-        total_keys: queryOne("SELECT COUNT(*) as c FROM licenses").c,
-        active_keys: queryOne("SELECT COUNT(*) as c FROM licenses WHERE is_active = 1 AND expired_at > datetime('now')").c,
-        expired_keys: queryOne("SELECT COUNT(*) as c FROM licenses WHERE expired_at <= datetime('now')").c,
-        revoked_keys: queryOne("SELECT COUNT(*) as c FROM licenses WHERE is_active = 0").c,
-        total_repos: queryOne("SELECT COUNT(*) as c FROM repos").c,
-        active_repos: queryOne("SELECT COUNT(*) as c FROM repos WHERE is_active = 1").c,
-        access_24h: queryOne("SELECT COUNT(*) as c FROM access_logs WHERE created_at >= datetime('now', '-24 hours')").c,
-        total_devices: queryOne("SELECT COUNT(*) as c FROM devices").c,
-        online_devices: queryOne("SELECT COUNT(*) as c FROM devices WHERE is_blocked = 0 AND last_seen >= datetime('now', '-5 minutes')").c,
-        blocked_ips: queryOne("SELECT COUNT(*) as c FROM blocked_ips").c,
-        blocked_devices: queryOne("SELECT COUNT(*) as c FROM devices WHERE is_blocked = 1").c,
-        downloads_today: queryOne("SELECT COUNT(*) as c FROM access_logs WHERE action = 'DOWNLOAD' AND created_at >= datetime('now', '-24 hours')").c,
-        errors_today: queryOne("SELECT COUNT(*) as c FROM access_logs WHERE action IN ('REVOKED','EXPIRED','BLOCKED_IP','INVALID_KEY','MAX_DEVICES','DEVICE_BLOCKED') AND created_at >= datetime('now', '-24 hours')").c,
-        plugin_activity_24h: queryOne("SELECT COUNT(*) as c FROM plugin_activity WHERE created_at >= datetime('now', '-24 hours')").c,
+        totalLicenses, activeLicenses, expiredLicenses, revokedLicenses,
+        totalDevices, activeDevices,
+        totalPluginEvents, totalPlaybacks,
+        todayPluginEvents, todayPlaybacks,
+        topPlugins, topSources, recentActivity, blockedIPs
     };
 }
 
+// ============================================================
+// EXPORTS
+// ============================================================
+
 module.exports = {
-    initDatabase, getSetting, setSetting, getAllSettings,
-    addRepo, getAllRepos, toggleRepo, deleteRepo, getActiveRepos,
-    createLicense, createBulkLicenses, getAllLicenses, getLicensesPaginated, getLicenseByKey,
-    revokeLicense, activateLicense, deleteLicense, restoreLicense, forceDeleteLicense, emptyTrash, renewLicense,
-    updateLicenseExpiry, updateLicenseMaxDevices, updateLicenseNote, updateLicenseName, getKeyDetails,
-    validateKey, logAccess, getRecentLogs, getLogsForKey, searchLogs,
-    verifyAdmin, changeAdminPassword, getStats,
-    registerDevice, getDevicesForKey, getDeviceCount, blockDevice, unblockDevice, deleteDevice, renameDevice, getOnlineDevices, getAllDevicesRecent,
+    initDatabase,
+    // Low-level query helpers (for analytics)
+    all, get,
+    // Settings
+    getSetting, setSetting, getAllSettings,
+    // Licenses
+    generateKey, createLicense, createBulkLicenses,
+    getLicensesPaginated, getLicenseByKey, getLicenseById,
+    updateLicenseStatus, updateLicense, softDeleteLicense,
+    restoreLicense, forceDeleteLicense, getLicenseDetails,
+    // Validation
+    validateLicense,
+    // Devices
+    getDevicesPaginated, blockDevice, unblockDevice, deleteDevice, renameDevice,
+    // Plugin tracking
+    trackPluginUsage, getPluginUsagePaginated,
+    // Playback tracking
+    trackPlayback, getPlaybackLogsPaginated,
+    // Access logs
+    logAccess, getAccessLogsPaginated,
+    // Security
+    recordFailedLogin, clearFailedLogins, getFailedLogins,
     blockIP, unblockIP, getBlockedIPs, isIPBlocked,
-    logPluginActivity, getPluginActivity, getPluginStats, parseUserAgent
+    // Admin
+    getAdminByUsername, updateAdminPassword,
+    // Dashboard
+    getDashboardStats
 };

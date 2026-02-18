@@ -1,1136 +1,1338 @@
-// ============================================
-// LUCIDE SVG ICON SYSTEM
-// ============================================
-const ICONS = {
-    key: '<path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
-    'key-square': '<path d="M12.4 2.7c.9-.9 2.5-.9 3.4 0l5.5 5.5c.9.9.9 2.5 0 3.4l-3.7 3.7c-.9.9-2.5.9-3.4 0L8.7 9.8c-.9-.9-.9-2.5 0-3.4z"/><path d="m14 7 3 3"/><path d="m9.4 16.6-4.6 4.6"/><path d="m11.8 14.2-4.6 4.6"/>',
-    monitor: '<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
-    smartphone: '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
-    clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
-    ban: '<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>',
-    download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
-    upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
-    'alert-triangle': '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
-    activity: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
-    plug: '<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a6 6 0 0 1-6 6v0a6 6 0 0 1-6-6V8z"/>',
-    database: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/>',
-    'file-text': '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
-    settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9"/>',
-    copy: '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
-    trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
-    'rotate-ccw': '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
-    save: '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>',
-    edit: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
-    tag: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
-    globe: '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
-    calendar: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
-    cpu: '<rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/>',
-    x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
-    check: '<polyline points="20 6 9 17 4 12"/>',
-    'check-circle': '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
-    'bar-chart': '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
-    search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
-    play: '<polygon points="5 3 19 12 5 21 5 3"/>',
-    loader: '<line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>',
-    zap: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
-    flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
-    folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
-    refresh: '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
-};
-
-function icon(name, size = 16, cls = '') {
-    const paths = ICONS[name] || ICONS.zap;
-    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${cls}" style="display:inline-block;vertical-align:middle;flex-shrink:0">${paths}</svg>`;
-}
+// ============================================================
+// CloudStream Premium — Admin Dashboard Frontend
+// All click handling via event delegation — NO inline onclick
+// ============================================================
 
 const API = '';
-let TOKEN = localStorage.getItem('cs_admin_token') || '';
-let refreshInterval = null;
-let searchDebounce = null;
-let currentDetailId = null;
-let currentDetailData = null;
+let token = localStorage.getItem('cs_token') || null;
+let currentPage = 'dashboard';
 
-// ============================================
-// THEME TOGGLE
-// ============================================
-function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('cs_theme', theme);
-}
+// Pagination state
+let licPage = 1, licSearch = '', licFilter = '', licSelectMode = false;
+let licSelected = new Set();
+let devPage = 1, devSearch = '';
+let puPage = 1, puSearch = '';
+let pbPage = 1, pbSearch = '';
+let alPage = 1, alSearch = '';
 
-function toggleTheme() {
-    const current = document.documentElement.getAttribute('data-theme') || 'light';
-    applyTheme(current === 'dark' ? 'light' : 'dark');
-}
+// ============================================================
+// INIT — All event listeners registered here
+// ============================================================
 
-// Auto-apply saved theme on load
-(function () {
-    const saved = localStorage.getItem('cs_theme') || 'light';
-    applyTheme(saved);
-})();
+document.addEventListener('DOMContentLoaded', () => {
+    // Login form
+    document.getElementById('loginForm').addEventListener('submit', handleLogin);
 
-// Toast
-function toast(msg, type = 'info') {
-    const el = document.createElement('div');
-    el.className = `toast toast-${type}`;
-    el.textContent = msg;
-    document.getElementById('toasts').appendChild(el);
-    setTimeout(() => el.remove(), 4000);
-}
+    // Sidebar navigation
+    document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+        item.addEventListener('click', () => navigateTo(item.dataset.page));
+    });
 
-// API helper
-async function api(path, opts = {}) {
-    const headers = { 'Content-Type': 'application/json' };
-    if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
-    const res = await fetch(API + path, { ...opts, headers });
-    if (res.status === 401 && path !== '/api/admin/login') {
-        // Token expired — force re-login
-        localStorage.removeItem('cs_admin_token');
-        TOKEN = '';
-        document.getElementById('app-main').classList.add('hidden');
-        document.getElementById('app-login').classList.remove('hidden');
-        toast('Session expired, silakan login ulang', 'error');
-        throw new Error('Session expired');
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+
+    // Modal close on overlay click
+    document.getElementById('modalOverlay').addEventListener('click', (e) => {
+        if (e.target.id === 'modalOverlay') closeModal();
+    });
+
+    // Global event delegation for dynamic content
+    document.getElementById('pageContent').addEventListener('click', handlePageClick);
+    document.getElementById('headerActions').addEventListener('click', handleHeaderClick);
+    document.getElementById('modalContent').addEventListener('click', handleModalClick);
+
+    // Init
+    if (token) {
+        showApp();
+        navigateTo('dashboard');
+    } else {
+        showLogin();
     }
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error');
-    return data;
-}
-
-// Tabs
-document.querySelectorAll('.tab').forEach(tab => {
-    tab.onclick = () => {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        tab.classList.add('active');
-        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
-        const loaders = { repos: loadRepos, keys: loadKeys, logs: loadAllLogs, settings: loadSettings, dashboard: loadDashboard, devices: loadDevicesTab, plugins: loadPluginStats };
-        if (loaders[tab.dataset.tab]) loaders[tab.dataset.tab]();
-    };
 });
 
-// Login
-async function login() {
-    try {
-        const data = await api('/api/admin/login', {
-            method: 'POST',
-            body: JSON.stringify({ username: document.getElementById('login-user').value, password: document.getElementById('login-pass').value })
-        });
-        TOKEN = data.token;
-        localStorage.setItem('cs_admin_token', TOKEN);
-        enterDashboard();
-    } catch (e) { toast(e.message, 'error'); }
+// ============================================================
+// EVENT DELEGATION HANDLERS
+// ============================================================
+
+function handlePageClick(e) {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const id = btn.dataset.id;
+    const val = btn.dataset.value;
+
+    switch (action) {
+        // Licenses
+        case 'view-license': viewLicenseDetails(parseInt(id)); break;
+        case 'revoke-license': revokeLicense(parseInt(id)); break;
+        case 'activate-license': activateLicense(parseInt(id)); break;
+        case 'delete-license': deleteLicense(parseInt(id)); break;
+        case 'edit-license': openEditLicenseModal(parseInt(id)); break;
+        case 'restore-license': restoreLicense(parseInt(id)); break;
+        case 'permanent-delete-license': permanentDeleteLicense(parseInt(id)); break;
+        case 'copy': copyToClipboard(val); break;
+        case 'copy-repo-url': copyToClipboard(val); break;
+
+        // License filter tabs
+        case 'lic-filter':
+            licFilter = val;
+            licPage = 1;
+            licSelected.clear();
+            renderLicenses(1);
+            break;
+
+        // Select mode
+        case 'toggle-select-mode':
+            licSelectMode = !licSelectMode;
+            licSelected.clear();
+            renderLicenses(licPage);
+            break;
+        case 'select-license': {
+            const lid = parseInt(id);
+            if (licSelected.has(lid)) licSelected.delete(lid); else licSelected.add(lid);
+            renderLicenses(licPage);
+            break;
+        }
+        case 'select-all-licenses': {
+            const checkboxes = document.querySelectorAll('[data-action="select-license"]');
+            if (licSelected.size === checkboxes.length && checkboxes.length > 0) {
+                licSelected.clear();
+            } else {
+                checkboxes.forEach(cb => licSelected.add(parseInt(cb.dataset.id)));
+            }
+            renderLicenses(licPage);
+            break;
+        }
+        case 'bulk-revoke': bulkAction('revoke'); break;
+        case 'bulk-delete': bulkAction('delete'); break;
+        case 'bulk-activate': bulkAction('activate'); break;
+        case 'bulk-restore': bulkAction('restore'); break;
+        case 'bulk-force-delete': bulkAction('force_delete'); break;
+
+        // License pagination
+        case 'lic-page': renderLicenses(parseInt(val)); break;
+        case 'lic-search':
+            licSearch = document.getElementById('licSearchInput')?.value || '';
+            licPage = 1;
+            renderLicenses(1);
+            break;
+
+        // Devices
+        case 'block-device': deviceAction(parseInt(id), 'block'); break;
+        case 'unblock-device': deviceAction(parseInt(id), 'unblock'); break;
+        case 'delete-device': deviceAction(parseInt(id), 'delete'); break;
+        case 'dev-page': renderDevices(parseInt(val)); break;
+        case 'dev-search':
+            devSearch = document.getElementById('devSearchInput')?.value || '';
+            renderDevices(1);
+            break;
+
+        // Plugin usage
+        case 'pu-page': renderPluginUsage(parseInt(val)); break;
+        case 'pu-search':
+            puSearch = document.getElementById('puSearchInput')?.value || '';
+            renderPluginUsage(1);
+            break;
+
+        // Playback
+        case 'pb-page': renderPlaybackLogs(parseInt(val)); break;
+        case 'pb-search':
+            pbSearch = document.getElementById('pbSearchInput')?.value || '';
+            renderPlaybackLogs(1);
+            break;
+
+        // Access logs
+        case 'al-page': renderAccessLogs(parseInt(val)); break;
+        case 'al-search':
+            alSearch = document.getElementById('alSearchInput')?.value || '';
+            renderAccessLogs(1);
+            break;
+
+        // Security
+        case 'unblock-ip': unblockIP(val); break;
+        case 'open-block-ip-modal': openBlockIPModal(); break;
+
+        // Settings
+        case 'save-settings': saveSettings(); break;
+        case 'change-password': changePassword(); break;
+
+        // Activity & Sessions
+        case 'refresh-activity': renderActivityFeed(); break;
+        case 'refresh-sessions': renderActiveSessions(); break;
+        case 'view-user-activity': viewUserActivity(val); break;
+
+        // Detail modal inline tabs
+        case 'detail-tab': {
+            document.querySelectorAll('.inline-tab').forEach(t => t.classList.toggle('active', t.dataset.value === val));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.tab === val));
+            break;
+        }
+    }
 }
 
-function enterDashboard() {
-    document.getElementById('app-login').classList.add('hidden');
-    document.getElementById('app-main').classList.remove('hidden');
-    loadDashboard();
-    if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(() => {
-        const active = document.querySelector('.tab.active');
-        if (active && active.dataset.tab === 'dashboard') loadDashboard();
-        if (active && active.dataset.tab === 'devices') loadDevicesTab();
-        if (active && active.dataset.tab === 'plugins') loadPluginStats(); // Auto-refresh plugins tab
-    }, 5000); // Faster refresh for realtime feel
+function handleHeaderClick(e) {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+
+    switch (action) {
+        case 'open-create-license': openCreateLicenseModal(); break;
+    }
+}
+
+function handleModalClick(e) {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const id = btn.dataset.id;
+
+    switch (action) {
+        case 'close-modal': closeModal(); break;
+        case 'create-license': createLicense(); break;
+        case 'delete-license': deleteLicense(parseInt(id)); break;
+        case 'edit-license-save': saveEditLicense(parseInt(id)); break;
+        case 'revoke-license': revokeLicense(parseInt(id)); break;
+        case 'activate-license': activateLicense(parseInt(id)); break;
+        case 'block-ip-confirm': blockIPConfirm(); break;
+        case 'copy': copyToClipboard(btn.dataset.value); break;
+        case 'copy-repo-url': copyToClipboard(btn.dataset.value); break;
+        case 'detail-tab': {
+            document.querySelectorAll('.inline-tab').forEach(t => t.classList.toggle('active', t.dataset.value === btn.dataset.value));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.tab === btn.dataset.value));
+            break;
+        }
+    }
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+    try {
+        const res = await apiFetch('/api/auth/login', {
+            method: 'POST', body: JSON.stringify({ username, password })
+        });
+        if (res.status === 'ok') {
+            token = res.token;
+            localStorage.setItem('cs_token', token);
+            showApp();
+            navigateTo('dashboard');
+            toast('Login successful', 'success');
+        } else {
+            toast(res.message || 'Login failed', 'error');
+        }
+    } catch (e) { toast('Connection error', 'error'); }
 }
 
 function logout() {
-    TOKEN = '';
-    localStorage.removeItem('cs_admin_token');
-    if (refreshInterval) clearInterval(refreshInterval);
-    location.reload();
+    token = null;
+    localStorage.removeItem('cs_token');
+    showLogin();
 }
 
-// Auto-login if saved token is valid
-(async function tryAutoLogin() {
-    if (!TOKEN) return;
-    try {
-        await api('/api/admin/stats');
-        enterDashboard();
-    } catch (e) {
-        TOKEN = '';
-        localStorage.removeItem('cs_admin_token');
+function showLogin() {
+    document.getElementById('loginPage').classList.remove('hidden');
+    document.getElementById('appLayout').classList.add('hidden');
+}
+
+function showApp() {
+    document.getElementById('loginPage').classList.add('hidden');
+    document.getElementById('appLayout').classList.remove('hidden');
+}
+
+// ============================================================
+// API HELPER
+// ============================================================
+
+async function apiFetch(url, opts = {}) {
+    const headers = { 'Content-Type': 'application/json', ...opts.headers };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${API}${url}`, { ...opts, headers });
+    if (res.status === 401) {
+        logout();
+        toast('Session expired', 'error');
+        throw new Error('Unauthorized');
     }
-})();
+    return res.json();
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+
+function navigateTo(page) {
+    currentPage = page;
+    document.querySelectorAll('.nav-item[data-page]').forEach(el => {
+        el.classList.toggle('active', el.dataset.page === page);
+    });
+    const titles = {
+        dashboard: 'Dashboard', licenses: 'License Management',
+        devices: 'Device Management', plugins: 'Plugin Usage',
+        playback: 'Playback Logs', logs: 'Access Logs',
+        security: 'Security Monitor', settings: 'Settings',
+        activity: 'Live Activity', sessions: 'Active Sessions'
+    };
+    document.getElementById('pageTitle').textContent = titles[page] || page;
+    document.getElementById('headerActions').innerHTML = '';
+
+    // Stop activity auto-refresh when leaving activity page
+    if (activityRefreshInterval && page !== 'activity') {
+        clearInterval(activityRefreshInterval);
+        activityRefreshInterval = null;
+    }
+
+    const renderers = {
+        dashboard: renderDashboard, licenses: renderLicenses,
+        devices: renderDevices, plugins: renderPluginUsage,
+        playback: renderPlaybackLogs, logs: renderAccessLogs,
+        security: renderSecurity, settings: renderSettings,
+        activity: renderActivityFeed, sessions: renderActiveSessions
+    };
+    if (renderers[page]) renderers[page]();
+}
+
+// ============================================================
+// TOAST / MODAL / UTIL
+// ============================================================
+
+function toast(message, type = 'info') {
+    const c = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = message;
+    c.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+}
+
+function openModal(html) {
+    document.getElementById('modalContent').innerHTML = html;
+    document.getElementById('modalOverlay').classList.add('show');
+}
+
+function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('show');
+}
+
+function formatDate(d) {
+    if (!d) return '-';
+    return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function timeAgo(d) {
+    if (!d) return '-';
+    const diff = Date.now() - new Date(d).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return 'Just now';
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+}
+
+function esc(s) { return !s ? '' : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+function statusBadge(s) {
+    const c = { active: 'badge-active', expired: 'badge-expired', revoked: 'badge-revoked', trashed: 'badge-trashed' };
+    return `<span class="badge ${c[s] || 'badge-info'}">${esc(s)}</span>`;
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => toast('Copied!', 'success')).catch(() => toast('Copy failed', 'error'));
+}
+
+function pagBtns(page, total, actionName) {
+    if (total <= 1) return '';
+    let h = '<div class="pagination">';
+    h += `<button ${page <= 1 ? 'disabled' : ''} data-action="${actionName}" data-value="${page - 1}">Prev</button>`;
+    for (let i = Math.max(1, page - 2); i <= Math.min(total, page + 2); i++) {
+        h += `<button class="${i === page ? 'active' : ''}" data-action="${actionName}" data-value="${i}">${i}</button>`;
+    }
+    h += `<button ${page >= total ? 'disabled' : ''} data-action="${actionName}" data-value="${page + 1}">Next</button>`;
+    return h + '</div>';
+}
+
+function searchBox(id, placeholder, actionName) {
+    return `<div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="${id}" placeholder="${placeholder}" value="" onkeydown="if(event.key==='Enter'){document.querySelector('[data-action=${actionName}]')?.click()}">
+        <button data-action="${actionName}" class="btn btn-sm btn-secondary" style="margin-left:4px">Go</button>
+    </div>`;
+}
 
 // ============================================================
 // DASHBOARD
 // ============================================================
-async function loadDashboard() {
+
+async function renderDashboard() {
+    const c = document.getElementById('pageContent');
+    c.innerHTML = '<div class="loading-overlay"><div class="spinner"></div></div>';
     try {
-        const stats = await api('/api/admin/stats');
-        document.getElementById('stats-grid').innerHTML = `
-            <div class="stat-card"><div class="stat-icon green">${icon('key', 20)}</div><div class="stat-body"><div class="label">Active Keys</div><div class="value green">${stats.active_keys}</div></div></div>
-            <div class="stat-card"><div class="stat-icon purple">${icon('key-square', 20)}</div><div class="stat-body"><div class="label">Total Keys</div><div class="value purple">${stats.total_keys}</div></div></div>
-            <div class="stat-card"><div class="stat-icon cyan">${icon('monitor', 20)}</div><div class="stat-body"><div class="label">Online Devices</div><div class="value cyan"><span class="pulse"></span>${stats.online_devices}</div></div></div>
-            <div class="stat-card"><div class="stat-icon yellow">${icon('clock', 20)}</div><div class="stat-body"><div class="label">Expired</div><div class="value yellow">${stats.expired_keys}</div></div></div>
-            <div class="stat-card"><div class="stat-icon red">${icon('ban', 20)}</div><div class="stat-body"><div class="label">Revoked</div><div class="value red">${stats.revoked_keys}</div></div></div>
-            <div class="stat-card"><div class="stat-icon purple">${icon('download', 20)}</div><div class="stat-body"><div class="label">Downloads 24h</div><div class="value purple">${stats.downloads_today}</div></div></div>
-            <div class="stat-card"><div class="stat-icon red">${icon('alert-triangle', 20)}</div><div class="stat-body"><div class="label">Errors 24h</div><div class="value red">${stats.errors_today}</div></div></div>
-            <div class="stat-card"><div class="stat-icon cyan">${icon('plug', 20)}</div><div class="stat-body"><div class="label">Plugin Acts 24h</div><div class="value cyan">${stats.plugin_activity_24h}</div></div></div>
-            <div class="stat-card"><div class="stat-icon purple">${icon('database', 20)}</div><div class="stat-body"><div class="label">Source Repos</div><div class="value purple">${stats.active_repos}/${stats.total_repos}</div></div></div>
-        `;
-        const logs = await api('/api/admin/logs?limit=15');
-        document.getElementById('recent-logs').innerHTML = logs.map(l => {
-            // Extract key number prefix (e.g. CS-01 from CS-01-XXXX-XXXX-XXXX)
-            const keyParts = (l.license_key || '').split('-');
-            const keyLabel = keyParts.length >= 2 ? `${keyParts[0]}-${keyParts[1]}` : (l.license_key || '-');
-            const badgeClass = actionBadge(l.action);
-            const devName = l.device_name && l.device_name !== 'Unknown' ? l.device_name : '-';
+        const d = await apiFetch('/api/admin/dashboard');
 
-            return `<tr>
-                <td style="font-size:11px;color:var(--muted)">${fmtDate(l.created_at)}</td>
-                <td><span class="badge badge-cyan" style="font-size:10px">${keyLabel}</span>${l.license_name ? `<div style="font-size:10px;color:var(--muted)">${esc(l.license_name)}</div>` : ''}</td>
-                <td><span class="badge ${badgeClass}">${l.action}</span></td>
-                <td style="font-size:12px;font-weight:600">${esc(devName)}</td>
-                <td style="font-size:12px">${l.ip_address || '-'}</td>
-                <td style="font-size:11px;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis">${l.details || '-'}</td>
-            </tr>`;
-        }).join('');
-
-        // Dashboard devices
-        try {
-            const devRes = await api('/api/admin/devices');
-            const devContainer = document.getElementById('dashboard-devices');
-            if (devRes && devRes.length > 0) {
-                devContainer.innerHTML = devRes.slice(0, 12).map(d => {
-                    const online = (new Date() - new Date(d.last_seen)) < 5 * 60 * 1000;
-                    const keyParts = (d.license_key || '').split('-');
-                    const keyLabel = keyParts.length >= 2 ? `${keyParts[0]}-${keyParts[1]}` : '';
-                    const name = d.device_name || d.device_model || 'Device';
-                    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;min-width:180px;flex:1;max-width:250px">
-                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-                            ${online ? '<span class="pulse"></span>' : '<span style="width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block"></span>'}
-                            <span style="font-weight:600;font-size:13px">${esc(name)}</span>
-                        </div>
-                        <div style="font-size:11px;color:var(--muted)">
-                            <span class="badge badge-cyan" style="font-size:9px;padding:2px 6px">${keyLabel}</span>
-                            · ${d.ip_address || '-'}
-                        </div>
-                    </div>`;
-                }).join('');
-            } else {
-                devContainer.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px;width:100%;font-size:13px">Belum ada device terdaftar</p>';
-            }
-        } catch (e) {
-            document.getElementById('dashboard-devices').innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px;width:100%;font-size:13px">-</p>';
+        let topPlugins = '';
+        if (d.topPlugins?.length) {
+            topPlugins = '<h3 style="margin:0 0 12px;font-size:15px">Top Plugins (7 days)</h3><div class="top-list">' +
+                d.topPlugins.map(p => `<div class="top-item"><span class="top-item-name">${esc(p.plugin_name)}</span><span class="top-item-count">${p.count}</span></div>`).join('') + '</div>';
         }
 
-        // Popular plugins
-        try {
-            const ps = await api('/api/admin/plugin-stats');
-            if (ps.popular && ps.popular.length > 0) {
-                const maxTotal = ps.popular[0].total;
-                document.getElementById('popular-plugins').innerHTML = ps.popular.slice(0, 8).map(p => `
-                    <div class="plugin-bar-item">
-                        <div class="plugin-bar-header">
-                            <span class="plugin-bar-name">${icon('plug', 14)} ${esc(p.plugin_name)}</span>
-                            <span class="plugin-bar-count">${p.total} access · ${p.unique_users} users</span>
-                        </div>
-                        <div class="plugin-bar-track">
-                            <div class="plugin-bar-fill" style="width:${Math.max(5, (p.total / maxTotal) * 100)}%">
-                                <span class="plugin-bar-dl">${icon('download', 12)} ${p.downloads}</span>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-            } else {
-                document.getElementById('popular-plugins').innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px;font-size:13px">Belum ada aktivitas plugin</p>';
-            }
-        } catch (e) {
-            document.getElementById('popular-plugins').innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px;font-size:13px">Belum ada aktivitas plugin</p>';
+        let recent = '';
+        if (d.recentActivity?.length) {
+            recent = `<div class="table-container"><div class="table-header"><h3>Recent Activity</h3></div>
+            <table><thead><tr><th>Action</th><th>Key</th><th>IP</th><th>Details</th><th>Time</th></tr></thead><tbody>` +
+                d.recentActivity.map(a => `<tr>
+                <td><span class="badge badge-info">${esc(a.action)}</span></td>
+                <td>${a.license_key ? `<span class="license-key" data-action="copy" data-value="${esc(a.license_key)}">${esc(a.license_key?.substring(0, 15))}</span>` : '-'}</td>
+                <td>${esc(a.ip_address)}</td>
+                <td>${esc(a.details?.substring(0, 40))}</td>
+                <td>${timeAgo(a.created_at)}</td>
+            </tr>`).join('') + '</tbody></table></div>';
         }
-    } catch (e) { toast(e.message, 'error'); }
-}
 
-// ============================================================
-// REPOS
-// ============================================================
-async function loadRepos() {
-    try {
-        const repos = await api('/api/admin/repos');
-        if (repos.length === 0) {
-            document.getElementById('repo-list').innerHTML = '<p style="color:var(--muted);text-align:center;padding:30px">No repos added yet. Click Add Repo to get started.</p>';
-            return;
-        }
-        document.getElementById('repo-list').innerHTML = repos.map(r => `
-            <div class="repo-item">
-                <div class="repo-info">
-                    <div class="repo-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${r.is_active ? 'var(--success)' : 'var(--danger)'}"></span> ${esc(r.name)}</div>
-                    <div class="repo-url">${esc(r.url)}</div>
-                </div>
-                <div class="repo-actions">
-                    <button class="btn btn-sm ${r.is_active ? 'btn-warning' : 'btn-success'}" onclick="toggleRepo(${r.id},${r.is_active ? 'false' : 'true'})">${r.is_active ? 'Nonaktifkan' : 'Aktifkan'}</button>
-                    <button class="btn btn-sm btn-danger" onclick="if(confirm('Hapus repo?'))delRepo(${r.id})">Hapus</button>
-                </div>
+        c.innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-card-header"><div class="stat-card-icon purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div></div><div class="stat-card-value">${d.totalLicenses}</div><div class="stat-card-label">Total Licenses</div><div class="stat-card-sub">${d.activeLicenses} active</div></div>
+                <div class="stat-card"><div class="stat-card-header"><div class="stat-card-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div></div><div class="stat-card-value">${d.totalDevices}</div><div class="stat-card-label">Total Devices</div><div class="stat-card-sub">${d.activeDevices} online</div></div>
+                <div class="stat-card"><div class="stat-card-header"><div class="stat-card-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div></div><div class="stat-card-value">${d.totalPluginEvents}</div><div class="stat-card-label">Plugin Events</div><div class="stat-card-sub">${d.todayPluginEvents} today</div></div>
+                <div class="stat-card"><div class="stat-card-header"><div class="stat-card-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div><div class="stat-card-value">${d.totalPlaybacks}</div><div class="stat-card-label">Playback Events</div><div class="stat-card-sub">${d.todayPlaybacks} today</div></div>
+                <div class="stat-card"><div class="stat-card-header"><div class="stat-card-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div></div><div class="stat-card-value">${d.blockedIPs}</div><div class="stat-card-label">Blocked IPs</div><div class="stat-card-sub">${d.revokedLicenses} revoked, ${d.expiredLicenses} expired</div></div>
             </div>
-        `).join('');
-    } catch (e) { toast(e.message, 'error'); }
+            ${topPlugins}
+            ${recent}
+        `;
+    } catch (e) { c.innerHTML = '<div class="empty-state"><p>Failed to load dashboard</p></div>'; }
 }
-function openAddRepoModal() { document.getElementById('modal-add-repo').classList.add('active'); }
-async function addRepo() {
-    try {
-        const name = document.getElementById('repo-name').value.trim();
-        const url = document.getElementById('repo-url').value.trim();
-        if (!name || !url) return toast('Name dan URL wajib diisi', 'error');
-        await api('/api/admin/repos', { method: 'POST', body: JSON.stringify({ name, url }) });
-        toast('Repo ditambahkan!', 'success');
-        closeModal('modal-add-repo');
-        document.getElementById('repo-name').value = '';
-        document.getElementById('repo-url').value = '';
-        loadRepos();
-    } catch (e) { toast(e.message, 'error'); }
-}
-async function toggleRepo(id, active) { try { await api(`/api/admin/repos/${id}/toggle`, { method: 'PUT', body: JSON.stringify({ active }) }); toast(active ? 'Repo diaktifkan' : 'Repo dinonaktifkan', 'success'); loadRepos(); } catch (e) { toast(e.message, 'error'); } }
-async function delRepo(id) { try { await api(`/api/admin/repos/${id}`, { method: 'DELETE' }); toast('Repo dihapus', 'success'); loadRepos(); } catch (e) { toast(e.message, 'error'); } }
-async function refreshRepos() { try { toast('Refreshing...', 'info'); const d = await api('/api/admin/repos/refresh', { method: 'POST' }); toast(d.message, 'success'); } catch (e) { toast(e.message, 'error'); } }
 
 // ============================================================
-// KEYS
+// LICENSES
 // ============================================================
 
-// Search & Pagination & Bulk Actions
-let keySearchDebounce = null;
-let currentPage = 1;
-const itemsPerPage = 20;
-let isTrashMode = false;
-let selectedKeys = new Set();
+let licTrashedView = false;
 
-function debounceKeySearch() {
-    if (keySearchDebounce) clearTimeout(keySearchDebounce);
-    keySearchDebounce = setTimeout(() => loadKeys(1), 300);
-}
-
-function clearSearch() {
-    const input = document.getElementById('key-search');
-    if (input) { input.value = ''; loadKeys(1); }
-}
-
-function toggleTrashMode() {
-    isTrashMode = !isTrashMode;
-    const btn = document.getElementById('btn-trash-mode');
-    if (isTrashMode) {
-        btn.classList.add('trash-active');
-        btn.innerHTML = `${icon('folder', 14)} Active Keys`;
-        document.getElementById('btn-bulk-restore').style.display = 'block'; // Show restore in trash
-    } else {
-        btn.classList.remove('trash-active');
-        btn.innerHTML = `${icon('trash', 14)} Trash`;
-        document.getElementById('btn-bulk-restore').style.display = 'none';
-    }
-    selectedKeys.clear();
-    updateBulkActions();
-    loadKeys(1);
-}
-
-async function loadKeys(page = 1) {
-    currentPage = page;
-    const search = document.getElementById('key-search')?.value.trim() || '';
-    const tableRx = document.getElementById('keys-table');
-    const paginationRx = document.getElementById('keys-pagination');
-
-    // Reset selection on page change? Optional. Let's keep it for now but maybe clear it.
-    // selectedKeys.clear(); updateBulkActions(); // Uncomment to clear on page change
-
-    if (tableRx) tableRx.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--muted)">Loading...</td></tr>';
+async function renderLicenses(page = 1) {
+    licPage = page;
+    licTrashedView = licFilter === 'trashed';
+    const c = document.getElementById('pageContent');
+    document.getElementById('headerActions').innerHTML = '<button class="btn btn-primary" data-action="open-create-license"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Create License</button>';
+    c.innerHTML = '<div class="loading-overlay"><div class="spinner"></div></div>';
 
     try {
-        const res = await api(`/api/admin/keys?page=${page}&limit=${itemsPerPage}&search=${encodeURIComponent(search)}&trashed=${isTrashMode}`);
+        const isTrashed = licFilter === 'trashed';
+        const statusParam = isTrashed ? '' : (licFilter || '');
+        const trashedParam = isTrashed ? 'true' : 'false';
+        const data = await apiFetch('/api/admin/licenses?page=' + page + '&limit=15&search=' + encodeURIComponent(licSearch) + '&status=' + statusParam + '&trashed=' + trashedParam);
+        const tp = Math.ceil(data.total / data.limit);
 
-        if (res.data.length === 0) {
-            if (tableRx) tableRx.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:30px">${isTrashMode ? 'Sampah kosong.' : 'Tidak ada key yang cocok.'} ${isTrashMode ? `<br><button class="btn btn-sm btn-ghost" onclick="api('/api/admin/trash',{method:'DELETE'}).then(()=>toast('Sampah dikosongkan','success')).then(()=>loadKeys())">Kosongkan Sampah Permanen</button>` : ''}</td></tr>`;
-            if (paginationRx) paginationRx.innerHTML = '';
-            return;
+        // Get counts for filter tabs
+        const [allData, activeData, expiredData, revokedData, trashedData] = await Promise.all([
+            apiFetch('/api/admin/licenses?page=1&limit=1&trashed=false'),
+            apiFetch('/api/admin/licenses?page=1&limit=1&status=active&trashed=false'),
+            apiFetch('/api/admin/licenses?page=1&limit=1&status=expired&trashed=false'),
+            apiFetch('/api/admin/licenses?page=1&limit=1&status=revoked&trashed=false'),
+            apiFetch('/api/admin/licenses?page=1&limit=1&trashed=true')
+        ]);
+
+        const tabs = [
+            { key: '', label: 'All', count: allData.total, icon: '\u{1F4CB}' },
+            { key: 'active', label: 'Active', count: activeData.total, icon: '\u2705' },
+            { key: 'expired', label: 'Expired', count: expiredData.total, icon: '\u23F0' },
+            { key: 'revoked', label: 'Revoked', count: revokedData.total, icon: '\u{1F6AB}' },
+            { key: 'trashed', label: 'Trash', count: trashedData.total, icon: '\u{1F5D1}\uFE0F' }
+        ];
+
+        const filterTabsHtml = '<div class="filter-tabs">' + tabs.map(function (t) {
+            return '<button class="filter-tab ' + (licFilter === t.key ? 'active' : '') + '" data-action="lic-filter" data-value="' + t.key + '">' + t.icon + ' ' + t.label + ' <span class="tab-count">' + t.count + '</span></button>';
+        }).join('') + '</div>';
+
+        const selectToggle = '<button class="btn btn-sm ' + (licSelectMode ? 'btn-ghost active' : 'btn-ghost') + '" data-action="toggle-select-mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Select</button>';
+
+        var selectBar = '';
+        if (licSelectMode) {
+            var barActions = '';
+            if (!isTrashed) {
+                barActions = '<button class="btn btn-sm btn-success" data-action="bulk-activate"' + (licSelected.size === 0 ? ' disabled' : '') + '>Activate</button>' +
+                    '<button class="btn btn-sm btn-warning" data-action="bulk-revoke"' + (licSelected.size === 0 ? ' disabled' : '') + '>Revoke</button>' +
+                    '<button class="btn btn-sm btn-danger" data-action="bulk-delete"' + (licSelected.size === 0 ? ' disabled' : '') + '>Delete</button>';
+            } else {
+                barActions = '<button class="btn btn-sm btn-success" data-action="bulk-restore"' + (licSelected.size === 0 ? ' disabled' : '') + '>Restore</button>' +
+                    '<button class="btn btn-sm btn-danger" data-action="bulk-force-delete"' + (licSelected.size === 0 ? ' disabled' : '') + '>Delete Forever</button>';
+            }
+            selectBar = '<div class="select-bar">' +
+                '<div class="select-bar-info">' +
+                '<div class="custom-checkbox ' + (licSelected.size > 0 ? 'checked' : '') + '" data-action="select-all-licenses"></div>' +
+                '<span>' + licSelected.size + ' selected</span></div>' +
+                '<div class="select-bar-actions">' + barActions + '</div></div>';
         }
 
-        if (tableRx) {
-            tableRx.innerHTML = res.data.map(k => {
-                const now = new Date();
-                const exp = new Date(k.expired_at.endsWith('Z') ? k.expired_at : k.expired_at + 'Z');
-                const isExp = now > exp;
-                const status = isTrashMode ? 'DELETED' : (!k.is_active ? 'REVOKED' : isExp ? 'EXPIRED' : 'ACTIVE');
-                const badge = status === 'ACTIVE' ? 'badge-green' : status === 'EXPIRED' ? 'badge-yellow' : 'badge-red';
+        var rows = '';
+        if (data.licenses && data.licenses.length) {
+            rows = data.licenses.map(function (l) {
+                var isSelected = licSelected.has(l.id);
+                var checkCol = licSelectMode ? '<td style="width:40px"><div class="custom-checkbox ' + (isSelected ? 'checked' : '') + '" data-action="select-license" data-id="' + l.id + '"></div></td>' : '';
 
-                // Duration / Remaining
-                let durationText = '-';
-                if (status === 'ACTIVE') {
-                    const diff = exp - now;
-                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    durationText = days > 0 ? `${days}d ${hours}h` : `${hours}h`;
-                } else if (status === 'EXPIRED') durationText = 'Habis';
+                var daysLeft = l.expires_at ? Math.ceil((new Date(l.expires_at) - Date.now()) / 86400000) : 0;
+                var expiryText = daysLeft > 0 ? daysLeft + 'd left' : 'Expired';
+                var expiryColor = daysLeft <= 0 ? 'var(--danger)' : daysLeft <= 3 ? 'var(--warning)' : 'var(--text-secondary)';
 
-                const isSelected = selectedKeys.has(k.id);
+                var actions = '';
+                if (isTrashed) {
+                    actions = '<div class="action-group">' +
+                        '<button class="btn btn-sm btn-success" data-action="restore-license" data-id="' + l.id + '" title="Restore"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>' +
+                        '<button class="btn btn-sm btn-danger" data-action="permanent-delete-license" data-id="' + l.id + '" title="Delete Forever"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button></div>';
+                } else {
+                    var toggleBtn = l.status === 'active'
+                        ? '<button class="btn btn-sm btn-warning" data-action="revoke-license" data-id="' + l.id + '" title="Revoke"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>'
+                        : '<button class="btn btn-sm btn-success" data-action="activate-license" data-id="' + l.id + '" title="Activate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></button>';
+                    actions = '<div class="action-group">' +
+                        '<button class="btn btn-sm btn-secondary" data-action="view-license" data-id="' + l.id + '" title="Detail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>' +
+                        '<button class="btn btn-sm btn-secondary" data-action="edit-license" data-id="' + l.id + '" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+                        toggleBtn +
+                        '<button class="btn btn-sm btn-danger" data-action="delete-license" data-id="' + l.id + '" title="Trash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>';
+                }
 
-                return `<tr class="${isSelected ? 'selected' : ''}" onclick="toggleSelectKey(${k.id})">
-                    <td style="text-align:center" onclick="event.stopPropagation()">
-                        <input type="checkbox" class="key-checkbox" onchange="toggleSelectKey(${k.id})" ${isSelected ? 'checked' : ''}>
-                    </td>
-                    <td onclick="openKeyDetail(${k.id});event.stopPropagation()">
-                        ${k.online_count > 0 ? '<span class="pulse"></span>' : ''} 
-                        ${k.name ? `<div style="font-weight:600;color:var(--text);margin-bottom:2px">${esc(k.name)}</div><div style="font-family:monospace;font-size:11px;color:var(--muted)">${k.license_key}</div>` : `<span style="font-family:monospace;font-weight:600">${k.license_key}</span>`}
-                    </td>
-                    <td><div class="url-box"><span class="url-text">${esc(k.repo_url)}</span><button class="copy-btn" data-url="${esc(k.repo_url)}" onclick="event.stopPropagation();copyUrl(this)">${icon('copy', 12)}</button></div></td>
-                    <td><span class="badge ${badge}">${status}</span></td>
-                    <td><div style="font-weight:600">${durationText}</div><div style="font-size:11px;color:var(--muted)">Total: ${k.duration_days}d</div></td>
-                    <td style="font-size:12px"><div>${fmtDate(k.created_at).split(' ')[0]}</div></td>
-                    <td style="font-size:12px">${fmtDate(k.expired_at)}</td>
-                    <td><span class="badge badge-cyan">${k.device_count}/${k.max_devices}</span></td>
-                    <td style="font-size:12px;color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis">${esc(k.note || '-')}</td>
-                    <td>
-                        <div style="display:flex;gap:4px;flex-wrap:wrap" onclick="event.stopPropagation()">
-                            ${isTrashMode ?
-                        `<button class="btn btn-xs btn-success" onclick="restoreKey(${k.id})">${icon('rotate-ccw', 12)} Restore</button>
-                                 <button class="btn btn-xs btn-danger" onclick="forceDeleteKey(${k.id})">${icon('flame', 12)}</button>` :
-                        `${status === 'ACTIVE' ? `<button class="btn btn-xs btn-warning" onclick="revokeKey(${k.id})">Revoke</button>` : `<button class="btn btn-xs btn-success" onclick="activateKey(${k.id})">Activate</button>`}
-                                 <button class="btn btn-xs btn-ghost" onclick="openRenewModal(${k.id})">${icon('clock', 12)}</button>
-                                 <button class="btn btn-xs btn-danger" onclick="confirmDeleteKey(${k.id})">${icon('trash', 12)}</button>`
-                    }
-                        </div>
-                    </td>
-                </tr>`;
+                var statusDisplay = isTrashed ? statusBadge('trashed') : statusBadge(l.status);
+
+                return '<tr class="' + (isSelected ? 'selected' : '') + '">' +
+                    checkCol +
+                    '<td><span class="license-key" data-action="copy" data-value="' + esc(l.license_key) + '" title="Click to copy">' + esc(l.license_key) + '</span></td>' +
+                    '<td>' + esc(l.name || '-') + '</td>' +
+                    '<td>' + statusDisplay + '</td>' +
+                    '<td><span class="badge badge-info">' + (l.device_count || 0) + '/' + l.max_devices + '</span></td>' +
+                    '<td title="' + formatDate(l.expires_at) + '"><span style="color:' + expiryColor + '">' + expiryText + '</span></td>' +
+                    '<td>' + timeAgo(l.created_at) + '</td>' +
+                    '<td>' + actions + '</td></tr>';
             }).join('');
         }
 
-        renderPagination(res.total_pages, page);
-        // Sync "Select All" checkbox
-        const allChecks = document.querySelectorAll('.key-checkbox');
-        const selectAll = document.getElementById('select-all-keys');
-        if (selectAll && allChecks.length > 0) {
-            selectAll.checked = Array.from(allChecks).every(c => c.checked);
-        }
+        var checkAllCol = licSelectMode ? '<th style="width:40px"><div class="custom-checkbox ' + (licSelected.size > 0 ? 'checked' : '') + '" data-action="select-all-licenses"></div></th>' : '';
+        var colspan = licSelectMode ? 8 : 7;
 
-    } catch (e) { toast(e.message, 'error'); }
-}
+        c.innerHTML =
+            '<div class="license-toolbar">' + filterTabsHtml +
+            '<div class="toolbar-actions">' + searchBox('licSearchInput', 'Search licenses...', 'lic-search') + selectToggle + '</div></div>' +
+            selectBar +
+            '<div class="table-container"><table><thead><tr>' + checkAllCol +
+            '<th>License Key</th><th>Name</th><th>Status</th><th>Devices</th><th>Expires</th><th>Created</th><th>Actions</th>' +
+            '</tr></thead><tbody>' +
+            (rows || '<tr><td colspan="' + colspan + '"><div class="empty-state"><p>' + (isTrashed ? 'Trash is empty' : 'No licenses found') + '</p></div></td></tr>') +
+            '</tbody></table>' +
+            '<div class="table-footer"><span>Showing ' + (data.licenses ? data.licenses.length : 0) + ' of ' + data.total + ' \u00B7 Page ' + page + ' of ' + (tp || 1) + '</span>' +
+            pagBtns(page, tp, 'lic-page') + '</div></div>';
 
-// Bulk Actions Logic
-function toggleSelectAll() {
-    const selectAll = document.getElementById('select-all-keys');
-    const checked = selectAll.checked;
-
-    document.querySelectorAll('.key-checkbox').forEach(c => {
-        c.checked = checked;
-        const match = c.getAttribute('onchange').match(/\d+/);
-        if (match) {
-            const id = parseInt(match[0]);
-            if (checked) selectedKeys.add(id);
-            else selectedKeys.delete(id);
-        }
-    });
-
-    document.querySelectorAll('#keys-table tr').forEach(tr => {
-        if (checked) tr.classList.add('selected');
-        else tr.classList.remove('selected');
-    });
-
-    updateBulkActions();
-}
-
-function toggleSelectKey(id) {
-    // Toggle set state
-    if (selectedKeys.has(id)) selectedKeys.delete(id);
-    else selectedKeys.add(id);
-
-    // Update dom directly to avoid reload/flicker
-    const checkbox = document.querySelector(`.key-checkbox[onchange="toggleSelectKey(${id})"]`);
-    if (checkbox) checkbox.checked = selectedKeys.has(id);
-
-    const tr = checkbox ? checkbox.closest('tr') : null;
-    if (tr) {
-        if (selectedKeys.has(id)) tr.classList.add('selected');
-        else tr.classList.remove('selected');
-    }
-
-    // Sync "Select All" header checkbox
-    const selectAll = document.getElementById('select-all-keys');
-    if (selectAll) {
-        const allChecks = document.querySelectorAll('.key-checkbox');
-        selectAll.checked = allChecks.length > 0 && Array.from(allChecks).every(c => c.checked);
-    }
-
-    updateBulkActions();
-}
-
-function updateBulkActions() {
-    const bar = document.getElementById('bulk-actions');
-    const count = document.getElementById('selected-count');
-    if (selectedKeys.size > 0) {
-        bar.classList.add('active');
-        count.textContent = `${selectedKeys.size} Terpilih`;
-    } else {
-        bar.classList.remove('active');
+        // Restore search value
+        var si = document.getElementById('licSearchInput');
+        if (si) si.value = licSearch;
+    } catch (e) {
+        console.error('Render licenses error:', e);
+        c.innerHTML = '<div class="empty-state"><p>Failed to load licenses</p></div>';
     }
 }
 
-function startBulkDelete() {
-    showConfirm(
-        'Hapus ' + selectedKeys.size + ' Key?',
-        isTrashMode ? 'Key akan dihapus PERMANEN. Tidak bisa dikembalikan.' : 'Key akan dipindahkan ke Sampah.',
-        async () => {
-            try {
-                await api('/api/admin/keys/bulk-delete', { method: 'POST', body: JSON.stringify({ ids: Array.from(selectedKeys), force: isTrashMode }) });
-                toast('Berhasil dihapus', 'success');
-                selectedKeys.clear(); updateBulkActions(); loadKeys(currentPage);
-            } catch (e) { toast(e.message, 'error'); }
+// --- License Detail Modal ---
+async function viewLicenseDetails(id) {
+    openModal('<div class="loading-overlay"><div class="spinner"></div></div>');
+    try {
+        var d = await apiFetch('/api/admin/licenses/' + id + '/details');
+        var settings = await apiFetch('/api/admin/settings');
+        var serverUrl = settings.settings ? (settings.settings.server_url || window.location.origin) : window.location.origin;
+        var repoUrl = serverUrl + '/r/' + d.license_key + '/repo.json';
+        var daysLeft = d.expires_at ? Math.ceil((new Date(d.expires_at) - Date.now()) / 86400000) : 0;
+
+        // Devices tab
+        var devicesHtml = '<div class="empty-state"><p>No devices registered</p></div>';
+        if (d.devices && d.devices.length) {
+            devicesHtml = '<table style="font-size:12px"><thead><tr><th>Device</th><th>IP</th><th>Last Seen</th><th>Status</th></tr></thead><tbody>' +
+                d.devices.map(function (dev) {
+                    return '<tr><td>' + esc(dev.device_name || (dev.device_id ? dev.device_id.substring(0, 16) : '-')) + '</td>' +
+                        '<td>' + esc(dev.ip_address) + '</td><td>' + timeAgo(dev.last_seen) + '</td>' +
+                        '<td>' + (dev.is_blocked ? '<span class="badge badge-blocked">Blocked</span>' : '<span class="badge badge-active">Active</span>') + '</td></tr>';
+                }).join('') + '</tbody></table>';
         }
+
+        // Plugins tab
+        var pluginHtml = '<div class="empty-state"><p>No plugin activity</p></div>';
+        if (d.pluginUsage && d.pluginUsage.length) {
+            pluginHtml = '<table style="font-size:12px"><thead><tr><th>Plugin</th><th>Action</th><th>Device</th><th>Time</th></tr></thead><tbody>' +
+                d.pluginUsage.slice(0, 20).map(function (p) {
+                    return '<tr><td>' + esc(p.plugin_name) + '</td><td><span class="badge badge-info">' + esc(p.action) + '</span></td>' +
+                        '<td>' + esc(p.device_id ? p.device_id.substring(0, 12) : '-') + '</td><td>' + timeAgo(p.used_at) + '</td></tr>';
+                }).join('') + '</tbody></table>';
+        }
+
+        // Logs tab
+        var logsHtml = '<div class="empty-state"><p>No activity logs</p></div>';
+        if (d.recentLogs && d.recentLogs.length) {
+            logsHtml = '<table style="font-size:12px"><thead><tr><th>Action</th><th>IP</th><th>Details</th><th>Time</th></tr></thead><tbody>' +
+                d.recentLogs.slice(0, 20).map(function (lg) {
+                    return '<tr><td><span class="badge badge-info">' + esc(lg.action) + '</span></td>' +
+                        '<td>' + esc(lg.ip_address) + '</td>' +
+                        '<td title="' + esc(lg.details) + '">' + esc(lg.details ? lg.details.substring(0, 30) : '-') + '</td>' +
+                        '<td>' + timeAgo(lg.created_at) + '</td></tr>';
+                }).join('') + '</tbody></table>';
+        }
+
+        var mc = document.getElementById('modalContent');
+        mc.className = 'modal modal-lg';
+        mc.innerHTML =
+            '<div class="modal-header"><h3>License Details</h3>' +
+            '<button class="btn-icon" data-action="close-modal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>' +
+            '<div class="modal-body" style="padding:0">' +
+            // Key header
+            '<div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">' +
+            '<div><div style="font-family:monospace;font-size:15px;font-weight:600;color:var(--accent);margin-bottom:4px">' + esc(d.license_key) + '</div>' +
+            '<div style="font-size:12px;color:var(--text-muted)">' + esc(d.name || 'Unnamed License') + '</div></div>' +
+            '<div style="display:flex;gap:8px;align-items:center">' + statusBadge(d.status) +
+            '<span style="font-size:13px;color:' + (daysLeft > 0 ? 'var(--success)' : 'var(--danger)') + '">' + (daysLeft > 0 ? daysLeft + 'd left' : 'Expired') + '</span></div></div>' +
+            // Info grid
+            '<div style="padding:20px 24px">' +
+            '<div class="info-grid">' +
+            '<div class="info-item"><div class="info-label">Status</div><div class="info-value">' + statusBadge(d.status) + '</div></div>' +
+            '<div class="info-item"><div class="info-label">Max Devices</div><div class="info-value">' + d.max_devices + '</div></div>' +
+            '<div class="info-item"><div class="info-label">Devices Used</div><div class="info-value">' + (d.devices ? d.devices.length : 0) + '</div></div>' +
+            '<div class="info-item"><div class="info-label">Expires</div><div class="info-value">' + formatDate(d.expires_at) + '</div></div>' +
+            '<div class="info-item"><div class="info-label">Created</div><div class="info-value">' + formatDate(d.created_at) + '</div></div>' +
+            '<div class="info-item"><div class="info-label">Note</div><div class="info-value">' + esc(d.note || '-') + '</div></div></div>' +
+            // Repo URL
+            '<div style="background:var(--bg-tertiary);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px">' +
+            '<div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:6px">Repository URL</div>' +
+            '<div style="display:flex;align-items:center;gap:8px">' +
+            '<code style="font-size:12px;color:var(--success);word-break:break-all;flex:1">' + esc(repoUrl) + '</code>' +
+            '<button class="btn btn-sm btn-secondary" data-action="copy" data-value="' + esc(repoUrl) + '">Copy</button></div></div>' +
+            // Tabs
+            '<div class="inline-tabs">' +
+            '<button class="inline-tab active" data-action="detail-tab" data-value="devices">Devices (' + (d.devices ? d.devices.length : 0) + ')</button>' +
+            '<button class="inline-tab" data-action="detail-tab" data-value="plugins">Plugins (' + (d.pluginUsage ? d.pluginUsage.length : 0) + ')</button>' +
+            '<button class="inline-tab" data-action="detail-tab" data-value="logs">Logs (' + (d.recentLogs ? d.recentLogs.length : 0) + ')</button></div>' +
+            '<div class="tab-panel active" data-tab="devices">' + devicesHtml + '</div>' +
+            '<div class="tab-panel" data-tab="plugins">' + pluginHtml + '</div>' +
+            '<div class="tab-panel" data-tab="logs">' + logsHtml + '</div></div></div>' +
+            // Footer
+            '<div class="modal-footer">' +
+            (d.status === 'active' ? '<button class="btn btn-warning btn-sm" data-action="revoke-license" data-id="' + d.id + '">Revoke</button>' : '<button class="btn btn-success btn-sm" data-action="activate-license" data-id="' + d.id + '">Activate</button>') +
+            '<button class="btn btn-secondary btn-sm" data-action="edit-license" data-id="' + d.id + '">Edit</button>' +
+            '<button class="btn btn-danger btn-sm" data-action="delete-license" data-id="' + d.id + '">Delete</button>' +
+            '<button class="btn btn-secondary btn-sm" data-action="close-modal">Close</button></div>';
+    } catch (e) {
+        console.error('License detail error:', e);
+        document.getElementById('modalContent').innerHTML = '<div class="modal-body"><div class="empty-state"><p>Failed to load details</p></div></div>';
+    }
+}
+
+// --- Revoke / Activate ---
+async function revokeLicense(id) {
+    if (!confirm('Revoke this license? Users will lose access immediately.')) return;
+    try {
+        await apiFetch('/api/admin/licenses/' + id, { method: 'PUT', body: JSON.stringify({ action: 'revoke' }) });
+        toast('License revoked', 'success');
+        closeModal();
+        renderLicenses(licPage);
+    } catch (e) { toast('Error revoking license', 'error'); }
+}
+
+async function activateLicense(id) {
+    if (!confirm('Activate this license?')) return;
+    try {
+        await apiFetch('/api/admin/licenses/' + id, { method: 'PUT', body: JSON.stringify({ action: 'activate' }) });
+        toast('License activated', 'success');
+        closeModal();
+        renderLicenses(licPage);
+    } catch (e) { toast('Error activating license', 'error'); }
+}
+
+// --- Soft Delete (to Trash) ---
+async function deleteLicense(id) {
+    if (!confirm('Move this license to trash?')) return;
+    try {
+        await apiFetch('/api/admin/licenses/' + id, { method: 'DELETE' });
+        toast('License moved to trash', 'success');
+        closeModal();
+        renderLicenses(licPage);
+    } catch (e) { toast('Error deleting license', 'error'); }
+}
+
+// --- Restore from Trash ---
+async function restoreLicense(id) {
+    try {
+        await apiFetch('/api/admin/licenses/' + id, { method: 'PUT', body: JSON.stringify({ action: 'restore' }) });
+        toast('License restored', 'success');
+        renderLicenses(licPage);
+    } catch (e) { toast('Error restoring license', 'error'); }
+}
+
+// --- Permanent Delete ---
+async function permanentDeleteLicense(id) {
+    if (!confirm('PERMANENTLY delete this license and ALL its data? This cannot be undone!')) return;
+    try {
+        await apiFetch('/api/admin/licenses/' + id + '?force=true', { method: 'DELETE' });
+        toast('License permanently deleted', 'success');
+        renderLicenses(licPage);
+    } catch (e) { toast('Error deleting license', 'error'); }
+}
+
+// --- Edit License Modal ---
+async function openEditLicenseModal(id) {
+    openModal('<div class="loading-overlay"><div class="spinner"></div></div>');
+    try {
+        var d = await apiFetch('/api/admin/licenses/' + id + '/details');
+        var expDate = d.expires_at ? new Date(d.expires_at).toISOString().slice(0, 16) : '';
+
+        var mc = document.getElementById('modalContent');
+        mc.className = 'modal';
+        mc.innerHTML =
+            '<div class="modal-header"><h3>Edit License</h3>' +
+            '<button class="btn-icon" data-action="close-modal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>' +
+            '<div class="modal-body">' +
+            '<div style="background:var(--bg-tertiary);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:20px;font-family:monospace;font-size:13px;color:var(--accent)">' + esc(d.license_key) + '</div>' +
+            '<div class="form-group"><label>Name</label><input type="text" id="editLicName" value="' + esc(d.name || '') + '"></div>' +
+            '<div class="form-group"><label>Note</label><textarea id="editLicNote" rows="2" style="resize:vertical">' + esc(d.note || '') + '</textarea></div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">' +
+            '<div class="form-group"><label>Max Devices</label><input type="number" id="editLicMaxDev" value="' + d.max_devices + '" min="1" max="100"></div>' +
+            '<div class="form-group"><label>Status</label>' +
+            '<select id="editLicStatus">' +
+            '<option value="active"' + (d.status === 'active' ? ' selected' : '') + '>Active</option>' +
+            '<option value="revoked"' + (d.status === 'revoked' ? ' selected' : '') + '>Revoked</option>' +
+            '<option value="expired"' + (d.status === 'expired' ? ' selected' : '') + '>Expired</option>' +
+            '</select></div></div>' +
+            '<div class="form-group"><label>Expiry Date</label><input type="datetime-local" id="editLicExpiry" value="' + expDate + '"></div>' +
+            '</div>' +
+            '<div class="modal-footer">' +
+            '<button class="btn btn-secondary" data-action="close-modal">Cancel</button>' +
+            '<button class="btn btn-primary" data-action="edit-license-save" data-id="' + d.id + '">Save Changes</button></div>';
+    } catch (e) {
+        toast('Error loading license', 'error');
+        closeModal();
+    }
+}
+
+async function saveEditLicense(id) {
+    var name = document.getElementById('editLicName').value;
+    var note = document.getElementById('editLicNote').value;
+    var maxDevices = parseInt(document.getElementById('editLicMaxDev').value) || 2;
+    var status = document.getElementById('editLicStatus').value;
+    var expiryVal = document.getElementById('editLicExpiry').value;
+    var expiresAt = expiryVal ? new Date(expiryVal).toISOString() : undefined;
+
+    try {
+        await apiFetch('/api/admin/licenses/' + id, {
+            method: 'PUT',
+            body: JSON.stringify({ name: name, note: note, max_devices: maxDevices, status: status, expires_at: expiresAt })
+        });
+        toast('License updated', 'success');
+        closeModal();
+        renderLicenses(licPage);
+    } catch (e) { toast('Error saving license', 'error'); }
+}
+
+// --- Create License Modal ---
+function openCreateLicenseModal() {
+    var mc = document.getElementById('modalContent');
+    mc.className = 'modal';
+    openModal(
+        '<div class="modal-header"><h3>Create License</h3>' +
+        '<button class="btn-icon" data-action="close-modal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>' +
+        '<div class="modal-body">' +
+        '<div class="form-group"><label>Customer Name (optional)</label><input type="text" id="createLicName" placeholder="e.g. John Doe"></div>' +
+        '<div class="form-group"><label>Note (optional)</label><textarea id="createLicNote" rows="2" style="resize:vertical" placeholder="Internal notes"></textarea></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">' +
+        '<div class="form-group"><label>Duration (days)</label><input type="number" id="createLicDuration" value="30" min="1" max="3650"></div>' +
+        '<div class="form-group"><label>Max Devices</label><input type="number" id="createLicMaxDev" value="2" min="1" max="100"></div></div>' +
+        '<div class="form-group"><label>Bulk Count (1 = single key)</label><input type="number" id="createLicCount" value="1" min="1" max="100"></div>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+        '<button class="btn btn-secondary" data-action="close-modal">Cancel</button>' +
+        '<button class="btn btn-primary" data-action="create-license">Create</button></div>'
     );
 }
 
-async function bulkRestore() {
-    try {
-        await api('/api/admin/keys/bulk-restore', { method: 'POST', body: JSON.stringify({ ids: Array.from(selectedKeys) }) });
-        toast('Berhasil dipulihkan', 'success');
-        selectedKeys.clear(); updateBulkActions(); loadKeys(currentPage);
-    } catch (e) { toast(e.message, 'error'); }
-}
-
-// Wrapper aliases
-function confirmBulkDelete() { startBulkDelete(); }
-function promptBulkRenew() {
-    const days = prompt('Tambah berapa hari?', '30');
-    if (days) api('/api/admin/keys/bulk-renew', { method: 'POST', body: JSON.stringify({ ids: Array.from(selectedKeys), days }) }).then(() => { toast('Berhasil diperpanjang', 'success'); selectedKeys.clear(); updateBulkActions(); loadKeys(currentPage); }).catch(e => toast(e.message, 'error'));
-}
-
-// Single Item Actions Wrappers (Refresh list after)
-async function restoreKey(id) { try { await api(`/api/admin/keys/bulk-restore`, { method: 'POST', body: JSON.stringify({ ids: [id] }) }); toast('Dipulihkan', 'success'); loadKeys(currentPage); } catch (e) { toast(e.message, 'error'); } }
-
-function forceDeleteKey(id) {
-    showConfirm('Hapus Permanen?', 'Data device dan log akan ikut terhapus.', async () => {
-        try {
-            await api(`/api/admin/keys/bulk-delete`, { method: 'POST', body: JSON.stringify({ ids: [id], force: true }) });
-            toast('Dihapus permanen', 'success');
-            loadKeys(currentPage);
-        } catch (e) { toast(e.message, 'error'); }
-    });
-}
-
-function renderPagination(totalPages, current) {
-    const container = document.getElementById('keys-pagination');
-    if (!container) return;
-
-    if (totalPages <= 1) {
-        container.innerHTML = '';
-        return;
-    }
-
-    let html = '';
-
-    // Prev
-    html += `<button class="btn btn-sm ${current === 1 ? 'btn-ghost' : 'btn-secondary'}" ${current === 1 ? 'disabled' : `onclick="loadKeys(${current - 1})"`}>Prev</button>`;
-
-    // Page Numbers (Show max 5)
-    let start = Math.max(1, current - 2);
-    let end = Math.min(totalPages, start + 4);
-    if (end - start < 4) start = Math.max(1, end - 4);
-
-    for (let i = start; i <= end; i++) {
-        html += `<button class="btn btn-sm ${i === current ? 'btn-primary' : 'btn-ghost'}" onclick="loadKeys(${i})">${i}</button>`;
-    }
-
-    // Next
-    html += `<button class="btn btn-sm ${current === totalPages ? 'btn-ghost' : 'btn-secondary'}" ${current === totalPages ? 'disabled' : `onclick="loadKeys(${current + 1})"`}>Next</button>`;
-
-    container.innerHTML = html;
-}
-
-
-// ============================================================
-// KEY DETAIL MODAL (Full Screen)
-// ============================================================
-async function openKeyDetail(id) {
-    currentDetailId = id;
-    document.getElementById('modal-key-detail').classList.add('active');
-    document.getElementById('detail-modal-content').innerHTML = '<p style="color:var(--muted);padding:30px;text-align:center">Loading...</p>';
-    // Reset to overview tab
-    document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
-    document.querySelector('.detail-tab[data-dtab="overview"]').classList.add('active');
+async function createLicense() {
+    var name = document.getElementById('createLicName').value;
+    var note = document.getElementById('createLicNote').value;
+    var duration = parseInt(document.getElementById('createLicDuration').value) || 30;
+    var maxDev = parseInt(document.getElementById('createLicMaxDev').value) || 2;
+    var count = parseInt(document.getElementById('createLicCount').value) || 1;
 
     try {
-        const d = await api(`/api/admin/keys/${id}/details`);
-        currentDetailData = d;
-        document.getElementById('detail-modal-title').innerHTML = `${icon('key', 18)} ${d.license_key}`;
-        renderDetailTab('overview');
-    } catch (e) {
-        document.getElementById('detail-modal-content').innerHTML = `<p style="color:var(--danger);padding:30px;text-align:center">${e.message}</p>`;
-    }
-}
-
-function closeKeyDetail() {
-    document.getElementById('modal-key-detail').classList.remove('active');
-    currentDetailId = null;
-    currentDetailData = null;
-}
-
-function switchDetailTab(tab) {
-    document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
-    document.querySelector(`.detail-tab[data-dtab="${tab}"]`).classList.add('active');
-    renderDetailTab(tab);
-}
-
-function renderDetailTab(tab) {
-    const d = currentDetailData;
-    if (!d) return;
-    const container = document.getElementById('detail-modal-content');
-    const now = new Date(), exp = new Date(d.expired_at);
-    const status = !d.is_active ? 'REVOKED' : now > exp ? 'EXPIRED' : 'ACTIVE';
-    const badge = status === 'ACTIVE' ? 'badge-green' : status === 'EXPIRED' ? 'badge-yellow' : 'badge-red';
-    const days = Math.ceil((exp - now) / 86400000);
-
-    switch (tab) {
-        case 'overview':
-            container.innerHTML = `
-        <div class="detail-overview">
-            <div class="overview-grid">
-                <div class="overview-card">
-                    <div class="overview-label">Status</div>
-                    <div class="overview-value"><span class="badge ${badge}" style="font-size:13px;padding:6px 16px">${status}</span></div>
-                </div>
-                <div class="overview-card">
-                    <div class="overview-label">Sisa Waktu</div>
-                    <div class="overview-value ${status === 'ACTIVE' ? 'green' : 'red'}">${status === 'ACTIVE' ? days + ' hari' : status}</div>
-                </div>
-                <div class="overview-card">
-                    <div class="overview-label">Devices</div>
-                    <div class="overview-value cyan">${d.device_count}/${d.max_devices}</div>
-                </div>
-                <div class="overview-card">
-                    <div class="overview-label">Online</div>
-                    <div class="overview-value green">${d.online_count > 0 ? '<span class="pulse"></span>' : ''}${d.online_count}</div>
-                </div>
-            </div>
-            <div class="overview-info-grid">
-                <div class="overview-info-row"><span class="overview-info-label">${icon('key', 14)} License Key</span><span class="overview-info-value mono">${d.license_key} <button class="btn btn-xs btn-ghost" onclick="copyText('${d.license_key}')">${icon('copy', 12)}</button></span></div>
-                <div class="overview-info-row"><span class="overview-info-label">${icon('globe', 14)} Repo URL</span><span class="overview-info-value mono" style="font-size:11px">${esc(d.repo_url)} <button class="btn btn-xs btn-ghost" onclick="copyText('${esc(d.repo_url)}')">${icon('copy', 12)}</button></span></div>
-                <div class="overview-info-row"><span class="overview-info-label">${icon('calendar', 14)} Created</span><span class="overview-info-value">${fmtDate(d.created_at)}</span></div>
-                <div class="overview-info-row"><span class="overview-info-label">${icon('clock', 14)} Expires</span><span class="overview-info-value">${new Date(d.expired_at).toLocaleString('id')}</span></div>
-                <div class="overview-info-row"><span class="overview-info-label">${icon('file-text', 14)} Note</span><span class="overview-info-value">${esc(d.note || '-')}</span></div>
-                <div class="overview-info-row"><span class="overview-info-label">${icon('clock', 14)} Duration</span><span class="overview-info-value">${d.duration_days} days</span></div>
-            </div>
-            ${d.plugin_usage && d.plugin_usage.length > 0 ? `
-            <div style="margin-top:16px">
-                <h4 style="margin-bottom:8px">${icon('plug', 16)} Recently Accessed Plugins</h4>
-                <div class="plugin-chips">${d.plugin_usage.slice(0, 5).map(p => `<span class="plugin-chip"><span class="plugin-chip-icon">${p.action === 'DOWNLOAD' ? icon('download', 14) : icon('plug', 14)}</span>${esc(p.plugin_name)}<span class="plugin-chip-count">${p.count}x</span></span>`).join('')}</div>
-            </div>` : ''}
-        </div>`;
-            break;
-
-        case 'devices':
-            container.innerHTML = `
-        <div class="detail-devices">
-            <h4>${icon('smartphone', 16)} Connected Devices (${d.device_count}/${d.max_devices})</h4>
-            ${d.devices.length === 0 ? '<p style="color:var(--muted);font-size:13px;padding:20px;text-align:center">Belum ada device terhubung</p>' :
-                    d.devices.map(dev => {
-                        const online = (new Date() - new Date(dev.last_seen)) < 5 * 60 * 1000;
-                        const displayName = dev.device_name || dev.device_model || 'Unknown Device';
-                        return `<div class="device-card-enhanced">
-                    <div class="device-card-left">
-                        <div class="device-avatar ${online ? 'online' : ''}">${getDeviceIcon(dev.os_info)}</div>
-                        <div class="device-info-enhanced">
-                            <div class="device-name-row">
-                                ${online ? '<span class="pulse"></span>' : ''}
-                                <span class="device-display-name">${esc(displayName)}</span>
-                                ${dev.is_blocked ? '<span class="badge badge-red">BLOCKED</span>' : ''}
-                            </div>
-                            <div class="device-meta-row">
-                                ${dev.device_model ? `<span class="device-meta-tag">${icon('smartphone', 12)} ${esc(dev.device_model)}</span>` : ''}
-                                ${dev.os_info ? `<span class="device-meta-tag">${icon('monitor', 12)} ${esc(dev.os_info)}</span>` : ''}
-                                <span class="device-meta-tag">${icon('globe', 12)} ${dev.ip_address}</span>
-                            </div>
-                            <div class="device-meta-row">
-                                <span class="device-meta-tag dim">ID: ${dev.device_id}</span>
-                                <span class="device-meta-tag dim">First: ${fmtDate(dev.first_seen)}</span>
-                                <span class="device-meta-tag dim">Last: ${fmtDate(dev.last_seen)}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="device-card-right">
-                        <button class="btn btn-xs btn-ghost" onclick="promptRenameDevice(${dev.id},'${esc(dev.device_name || '')}')">${icon('tag', 12)} Label</button>
-                        ${dev.is_blocked ? `<button class="btn btn-xs btn-success" onclick="unblockDevDetail(${dev.id})">Unblock</button>` : `<button class="btn btn-xs btn-warning" onclick="blockDevDetail(${dev.id})">Block</button>`}
-                        <button class="btn btn-xs btn-danger" onclick="if(confirm('Delete device?'))deleteDevDetail(${dev.id})">${icon('trash', 12)}</button>
-                        <button class="btn btn-xs btn-ghost" onclick="addBlockedIP('${dev.ip_address}','Device ${dev.device_id}')">${icon('ban', 12)} IP</button>
-                    </div>
-                </div>`;
-                    }).join('')}
-        </div>`;
-            break;
-
-        case 'activity':
-            // Build IP-to-device map from device list
-            const ipDeviceMap = {};
-            if (d.devices) {
-                d.devices.forEach(dev => {
-                    const name = dev.device_name || dev.device_model || 'Unknown';
-                    if (dev.ip_address) ipDeviceMap[dev.ip_address] = name;
-                });
-            }
-
-            container.innerHTML = `
-        <div class="detail-activity">
-            <h4>${icon('file-text', 16)} Access Log (last 50)</h4>
-            <div class="table-wrap" style="max-height:500px;overflow-y:auto">
-                <table><thead><tr><th>Waktu</th><th>Aksi</th><th>Device</th><th>IP</th><th>Detail</th></tr></thead>
-                <tbody>${d.recent_logs.map(l => {
-                const deviceName = ipDeviceMap[l.ip_address] || '-';
-                return `<tr>
-                    <td style="font-size:11px;color:var(--muted)">${fmtDate(l.created_at)}</td>
-                    <td><span class="badge ${actionBadge(l.action)}">${l.action}</span></td>
-                    <td style="font-size:12px;font-weight:600">${esc(deviceName)}</td>
-                    <td style="font-size:12px">${l.ip_address || '-'}</td>
-                    <td style="font-size:11px;color:var(--muted)">${esc(l.details || '-')}</td>
-                </tr>`;
-            }).join('')}</tbody></table>
-            </div>
-        </div>`;
-            break;
-
-        case 'plugin-usage':
-            container.innerHTML = `
-        <div class="detail-plugins">
-            <h4>${icon('activity', 16)} Plugin Usage</h4>
-            ${d.plugin_usage && d.plugin_usage.length > 0 ? `
-            <div class="table-wrap">
-                <table><thead><tr><th>Plugin</th><th>Aksi</th><th>Jumlah</th><th>Terakhir</th></tr></thead>
-                <tbody>${d.plugin_usage.map(p => `<tr>
-                    <td style="font-weight:600">${icon('plug', 14)} ${esc(p.plugin_name)}</td>
-                    <td><span class="badge ${p.action === 'DOWNLOAD' ? 'badge-purple' : 'badge-cyan'}">${p.action}</span></td>
-                    <td style="font-weight:700">${p.count}x</td>
-                    <td style="font-size:11px;color:var(--muted)">${fmtDate(p.last_used)}</td>
-                </tr>`).join('')}</tbody></table>
-            </div>` : '<p style="color:var(--muted);font-size:13px;padding:20px;text-align:center">Belum ada aktivitas plugin</p>'}
-        </div>`;
-            break;
-
-        case 'edit':
-            container.innerHTML = `
-        <div class="detail-edit">
-            <h4>${icon('edit', 16)} Edit License</h4>
-            <div class="edit-grid">
-                <div class="form-group">
-                    <label>Tanggal Expired</label>
-                    <div class="inline-edit">
-                        <input type="date" id="modal-edit-exp" value="${exp.toISOString().split('T')[0]}">
-                        <button class="btn btn-sm btn-primary" onclick="modalSaveExpiry()">${icon('save', 14)} Save</button>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Max Devices</label>
-                    <div class="inline-edit">
-                        <input type="number" id="modal-edit-maxdev" value="${d.max_devices}" min="1" max="100" style="width:80px">
-                        <button class="btn btn-sm btn-primary" onclick="modalSaveMaxDevices()">${icon('save', 14)} Save</button>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Catatan / Nama User</label>
-                    <div class="inline-edit">
-                        <input type="text" id="modal-edit-note" value="${esc(d.note || '')}" placeholder="Nama user, keterangan...">
-                        <button class="btn btn-sm btn-primary" onclick="modalSaveNote()">${icon('save', 14)} Save</button>
-                    </div>
-                </div>
-            </div>
-            <div style="margin-top:24px;display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn btn-sm btn-ghost" onclick="openRenewModal(${d.id});closeKeyDetail()">${icon('clock', 14)} Renew</button>
-                ${d.is_active ? `<button class="btn btn-sm btn-warning" onclick="revokeKeyDetail()">${icon('ban', 14)} Revoke Key</button>` : `<button class="btn btn-sm btn-success" onclick="activateKeyDetail()">${icon('check-circle', 14)} Activate Key</button>`}
-                <button class="btn btn-sm btn-danger" onclick="if(confirm('Delete this license key and all associated device and log data?'))deleteKeyDetail()">${icon('trash', 14)} Delete Key</button>
-            </div>
-        </div>`;
-            break;
-    }
-}
-
-// Detail modal actions
-async function modalSaveExpiry() {
-    try { await api(`/api/admin/keys/${currentDetailId}/expiry`, { method: 'PUT', body: JSON.stringify({ expiry_date: new Date(document.getElementById('modal-edit-exp').value).toISOString() }) }); toast('Expired date diperbarui', 'success'); await refreshDetailData(); } catch (e) { toast(e.message, 'error'); }
-}
-async function modalSaveMaxDevices() {
-    try { await api(`/api/admin/keys/${currentDetailId}/max-devices`, { method: 'PUT', body: JSON.stringify({ max_devices: parseInt(document.getElementById('modal-edit-maxdev').value) }) }); toast('Max devices diperbarui', 'success'); await refreshDetailData(); } catch (e) { toast(e.message, 'error'); }
-}
-async function modalSaveNote() {
-    try { await api(`/api/admin/keys/${currentDetailId}/note`, { method: 'PUT', body: JSON.stringify({ note: document.getElementById('modal-edit-note').value }) }); toast('Catatan diperbarui', 'success'); } catch (e) { toast(e.message, 'error'); }
-}
-async function revokeKeyDetail() {
-    try { await api(`/api/admin/keys/${currentDetailId}/revoke`, { method: 'PUT' }); toast('Key di-revoke', 'success'); await refreshDetailData(); loadKeys(); } catch (e) { toast(e.message, 'error'); }
-}
-async function activateKeyDetail() {
-    try { await api(`/api/admin/keys/${currentDetailId}/activate`, { method: 'PUT' }); toast('Key diaktifkan', 'success'); await refreshDetailData(); loadKeys(); } catch (e) { toast(e.message, 'error'); }
-}
-async function deleteKeyDetail() {
-    try { await api(`/api/admin/keys/${currentDetailId}`, { method: 'DELETE' }); toast('Key dihapus', 'success'); closeKeyDetail(); loadKeys(); } catch (e) { toast(e.message, 'error'); }
-}
-
-async function blockDevDetail(devId) {
-    try { await api(`/api/admin/devices/${devId}/block`, { method: 'POST' }); toast('Device diblokir', 'success'); await refreshDetailData(); renderDetailTab('devices'); } catch (e) { toast(e.message, 'error'); }
-}
-async function unblockDevDetail(devId) {
-    try { await api(`/api/admin/devices/${devId}/unblock`, { method: 'POST' }); toast('Device di-unblock', 'success'); await refreshDetailData(); renderDetailTab('devices'); } catch (e) { toast(e.message, 'error'); }
-}
-async function deleteDevDetail(devId) {
-    try { await api(`/api/admin/devices/${devId}`, { method: 'DELETE' }); toast('Device dihapus', 'success'); await refreshDetailData(); renderDetailTab('devices'); } catch (e) { toast(e.message, 'error'); }
-}
-
-async function promptRenameDevice(devId, currentName) {
-    const name = prompt('Masukkan label untuk device ini:', currentName);
-    if (name === null) return;
-    try { await api(`/api/admin/devices/${devId}/name`, { method: 'PUT', body: JSON.stringify({ name }) }); toast('Device di-rename', 'success'); await refreshDetailData(); renderDetailTab('devices'); } catch (e) { toast(e.message, 'error'); }
-}
-
-async function refreshDetailData() {
-    if (!currentDetailId) return;
-    try {
-        const d = await api(`/api/admin/keys/${currentDetailId}/details`);
-        currentDetailData = d;
-    } catch (e) { /* ignore */ }
-}
-
-function getDeviceIcon(os) {
-    if (!os) return icon('smartphone', 18);
-    const lower = os.toLowerCase();
-    if (lower.includes('android')) return icon('smartphone', 18);
-    if (lower.includes('ios') || lower.includes('ipad')) return icon('smartphone', 18);
-    if (lower.includes('windows')) return icon('monitor', 18);
-    if (lower.includes('mac')) return icon('monitor', 18);
-    if (lower.includes('linux')) return icon('monitor', 18);
-    return icon('smartphone', 18);
-}
-
-// ============================================================
-// KEYS (basic actions)
-function openGenModal() { document.getElementById('gen-result').innerHTML = ''; document.getElementById('gen-name').value = ''; document.getElementById('gen-note').value = ''; document.getElementById('modal-gen').classList.add('active'); }
-async function genKey() {
-    try {
-        const data = await api('/api/admin/keys/generate', {
+        var res = await apiFetch('/api/admin/licenses', {
             method: 'POST',
-            body: JSON.stringify({
-                duration_days: parseInt(document.getElementById('gen-duration').value),
-                count: parseInt(document.getElementById('gen-count').value),
-                max_devices: parseInt(document.getElementById('gen-maxdev').value),
-                note: document.getElementById('gen-note').value.trim(),
-                name: document.getElementById('gen-name') ? document.getElementById('gen-name').value.trim() : ''
-            })
+            body: JSON.stringify({ duration_days: duration, name: name, note: note, max_devices: maxDev, count: count })
         });
-        toast(data.message, 'success');
-        const items = data.licenses ? data.licenses : [data.license];
-        document.getElementById('gen-result').innerHTML = `
-            <div class="gen-result"><h4>${icon('check-circle', 18)} Keys Generated Successfully!</h4>
-            ${items.map(l => `<div class="gen-key-item" data-url="${esc(l.repo_url)}" onclick="copyUrl(this)" title="Click to copy URL">
-                <span class="key-label">${icon('key', 14)} ${l.license_key}</span><span class="key-url">${icon('copy', 12)} ${esc(l.repo_url)}</span>
-            </div>`).join('')}
-            <p style="font-size:11px;color:var(--muted);margin-top:8px">Click a key to copy the repo URL.</p></div>`;
-        loadKeys();
-    } catch (e) { toast(e.message, 'error'); }
+        if (res.status === 'ok') {
+            if (res.keys) {
+                var keysList = res.keys.map(function (k) { return '<div style="font-family:monospace;font-size:12px;padding:4px 0;color:var(--accent)">' + esc(k) + '</div>'; }).join('');
+                document.getElementById('modalContent').innerHTML =
+                    '<div class="modal-header"><h3>\u2705 ' + res.keys.length + ' Licenses Created</h3>' +
+                    '<button class="btn-icon" data-action="close-modal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>' +
+                    '<div class="modal-body" style="max-height:50vh;overflow-y:auto">' +
+                    '<button class="btn btn-sm btn-secondary" data-action="copy" data-value="' + esc(res.keys.join('\n')) + '" style="margin-bottom:12px">Copy All Keys</button>' +
+                    keysList + '</div>' +
+                    '<div class="modal-footer"><button class="btn btn-primary" data-action="close-modal">Done</button></div>';
+            } else {
+                document.getElementById('modalContent').innerHTML =
+                    '<div class="modal-header"><h3>\u2705 License Created</h3>' +
+                    '<button class="btn-icon" data-action="close-modal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>' +
+                    '<div class="modal-body"><div style="background:var(--bg-tertiary);border-radius:var(--radius-sm);padding:14px;text-align:center">' +
+                    '<div style="font-family:monospace;font-size:16px;color:var(--accent);font-weight:600;margin-bottom:8px">' + esc(res.key) + '</div>' +
+                    '<button class="btn btn-sm btn-primary" data-action="copy" data-value="' + esc(res.key) + '">Copy Key</button></div></div>' +
+                    '<div class="modal-footer"><button class="btn btn-primary" data-action="close-modal">Done</button></div>';
+            }
+            renderLicenses(1);
+            toast('License(s) created!', 'success');
+        } else {
+            toast(res.message || 'Create failed', 'error');
+        }
+    } catch (e) { toast('Error creating license', 'error'); }
 }
 
-async function revokeKey(id) { try { await api(`/api/admin/keys/${id}/revoke`, { method: 'PUT' }); toast('Key di-revoke', 'success'); loadKeys(); } catch (e) { toast(e.message, 'error'); } }
-async function activateKey(id) { try { await api(`/api/admin/keys/${id}/activate`, { method: 'PUT' }); toast('Key diaktifkan', 'success'); loadKeys(); } catch (e) { toast(e.message, 'error'); } }
-async function confirmDeleteKey(id) {
-    showConfirm('Hapus Key?', 'Data yang dihapus tidak bisa dikembalikan.', () => deleteKey(id));
-}
+// --- Bulk Actions ---
+async function bulkAction(action) {
+    if (licSelected.size === 0) { toast('No licenses selected', 'error'); return; }
+    var labels = { revoke: 'revoke', activate: 'activate', delete: 'move to trash', force_delete: 'permanently delete', restore: 'restore' };
+    if (!confirm((labels[action] || action) + ' ' + licSelected.size + ' license(s)?')) return;
 
-// Custom Confirm Helper
-function showConfirm(title, msg, onYes) {
-    document.getElementById('confirm-title').innerText = title;
-    document.getElementById('confirm-msg').innerText = msg;
-    const btn = document.getElementById('confirm-yes-btn');
-    btn.onclick = () => { onYes(); closeConfirm(true); };
-    document.getElementById('modal-confirm').classList.add('active');
-}
-function closeConfirm() { document.getElementById('modal-confirm').classList.remove('active'); }
-
-async function deleteKey(id) {
-    console.log('Deleting key ID:', id);
     try {
-        await api(`/api/admin/keys/${id}`, { method: 'DELETE' });
-        toast('Key dihapus', 'success');
-        loadKeys();
+        if (action === 'restore') {
+            for (var id of licSelected) {
+                await apiFetch('/api/admin/licenses/' + id, { method: 'PUT', body: JSON.stringify({ action: 'restore' }) });
+            }
+        } else {
+            await apiFetch('/api/admin/licenses/bulk', {
+                method: 'POST',
+                body: JSON.stringify({ ids: Array.from(licSelected), action: action })
+            });
+        }
+        toast(licSelected.size + ' license(s) ' + action + 'd', 'success');
+        licSelected.clear();
+        renderLicenses(licPage);
+    } catch (e) { toast('Bulk action failed', 'error'); }
+}
+
+// ============================================================
+// DEVICES
+// ============================================================
+
+async function renderDevices(page = 1) {
+    devPage = page;
+    const c = document.getElementById('pageContent');
+    document.getElementById('headerActions').innerHTML = '';
+    c.innerHTML = '<div class="loading-overlay"><div class="spinner"></div></div>';
+    try {
+        const data = await apiFetch(`/api/admin/devices?page=${page}&limit=20&search=${encodeURIComponent(devSearch)}`);
+        const tp = Math.ceil(data.total / data.limit);
+
+        let rows = data.devices?.length ? data.devices.map(d => `<tr>
+            <td>${esc(d.device_name || d.device_id?.substring(0, 16) || '-')}</td>
+            <td><span class="license-key" data-action="copy" data-value="${esc(d.license_key)}">${esc(d.license_key?.substring(0, 15))}</span></td>
+            <td>${esc(d.ip_address)}</td>
+            <td>${timeAgo(d.last_seen)}</td>
+            <td>${d.is_blocked ? '<span class="badge badge-blocked">Blocked</span>' : '<span class="badge badge-active">Active</span>'}</td>
+            <td>
+                ${d.is_blocked
+                ? `<button class="btn btn-sm btn-success" data-action="unblock-device" data-id="${d.id}">Unblock</button>`
+                : `<button class="btn btn-sm btn-danger" data-action="block-device" data-id="${d.id}">Block</button>`}
+                <button class="btn btn-sm btn-secondary" data-action="delete-device" data-id="${d.id}">Delete</button>
+            </td>
+        </tr>`).join('') : '';
+
+        c.innerHTML = `<div class="table-container">
+            <div class="table-header"><h3>All Devices (${data.total})</h3><div class="table-actions">${searchBox('devSearchInput', 'Search devices...', 'dev-search')}</div></div>
+            <table><thead><tr><th>Device</th><th>License</th><th>IP</th><th>Last Seen</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="6"><div class="empty-state"><p>No devices found</p></div></td></tr>'}</tbody></table>
+            <div class="table-footer"><span>Page ${page} of ${tp || 1}</span>${pagBtns(page, tp, 'dev-page')}</div>
+        </div>`;
+    } catch (e) { c.innerHTML = '<div class="empty-state"><p>Failed to load devices</p></div>'; }
+}
+
+async function deviceAction(id, action) {
+    if (action === 'delete' && !confirm('Delete this device?')) return;
+    if (action === 'block' && !confirm('Block this device?')) return;
+    try {
+        await apiFetch(`/api/admin/devices/${id}`, { method: 'PUT', body: JSON.stringify({ action }) });
+        toast(`Device ${action}ed`, 'success');
+        renderDevices(devPage);
+    } catch (e) { toast('Error', 'error'); }
+}
+
+// ============================================================
+// LIVE ACTIVITY FEED
+// ============================================================
+
+let activityRefreshInterval = null;
+
+async function renderActivityFeed() {
+    const c = document.getElementById('pageContent');
+    document.getElementById('headerActions').innerHTML = '<button class="btn btn-sm btn-secondary" data-action="refresh-activity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Refresh</button>';
+    c.innerHTML = '<div class="loading-overlay"><div class="spinner"></div></div>';
+
+    try {
+        const data = await apiFetch('/api/admin/activity-feed?minutes=60&limit=200');
+
+        const actionColors = {
+            'HOME': 'badge-info', 'OPEN': 'badge-info', 'SEARCH': 'badge-active',
+            'LOAD': 'badge-active', 'PLAY': 'badge-warning', 'DOWNLOAD': 'badge-expired',
+            'SWITCH': 'badge-info'
+        };
+
+        const actionIcons = {
+            'HOME': '🏠', 'OPEN': '📂', 'SEARCH': '🔍', 'LOAD': '📄',
+            'PLAY': '▶️', 'DOWNLOAD': '⬇️', 'SWITCH': '🔄', 'playback': '🎬'
+        };
+
+        let feedHtml = '';
+        if (data.feed && data.feed.length) {
+            feedHtml = '<div class="activity-feed">' + data.feed.map(item => {
+                const isPlayback = item.type === 'playback';
+                const actionBadge = isPlayback
+                    ? '<span class="badge badge-warning">PLAY</span>'
+                    : '<span class="badge ' + (actionColors[item.action] || 'badge-info') + '">' + esc(item.action) + '</span>';
+                const icon = isPlayback ? actionIcons['playback'] : (actionIcons[item.action] || '📋');
+                const detail = isPlayback
+                    ? '<span style="color:var(--text-primary);font-weight:500">' + esc(item.video_title || '') + '</span> <span style="color:var(--text-muted)">via</span> ' + esc(item.plugin_name)
+                    : '<span style="color:var(--text-primary);font-weight:500">' + esc(item.plugin_name) + '</span>';
+                const source = isPlayback && item.source_provider === 'DOWNLOAD' ? ' <span class="badge badge-expired">DL</span>' : '';
+
+                return '<div class="activity-item">' +
+                    '<div class="activity-icon">' + icon + '</div>' +
+                    '<div class="activity-body">' +
+                    '<div class="activity-main">' + actionBadge + ' ' + detail + source + '</div>' +
+                    '<div class="activity-meta">' +
+                    '<span class="license-key" data-action="copy" data-value="' + esc(item.license_key) + '" title="Click to copy">' + esc(item.license_name || item.license_key?.substring(0, 12)) + '</span>' +
+                    ' · ' + esc(item.ip_address) +
+                    ' · ' + timeAgo(item.timestamp) +
+                    '</div></div></div>';
+            }).join('') + '</div>';
+        } else {
+            feedHtml = '<div class="empty-state"><p>No activity in the last 60 minutes</p></div>';
+        }
+
+        // Summary stats
+        const plays = data.feed ? data.feed.filter(f => f.type === 'playback' || f.action === 'PLAY').length : 0;
+        const searches = data.feed ? data.feed.filter(f => f.action === 'SEARCH').length : 0;
+        const downloads = data.feed ? data.feed.filter(f => f.source_provider === 'DOWNLOAD').length : 0;
+        const uniqueUsers = data.feed ? new Set(data.feed.map(f => f.license_key)).size : 0;
+
+        c.innerHTML = `
+            <div class="stats-grid" style="margin-bottom:20px">
+                <div class="stat-card mini">
+                    <div class="stat-card-value">${data.count || 0}</div>
+                    <div class="stat-card-label">Total Events</div>
+                </div>
+                <div class="stat-card mini">
+                    <div class="stat-card-value">${uniqueUsers}</div>
+                    <div class="stat-card-label">Active Users</div>
+                </div>
+                <div class="stat-card mini">
+                    <div class="stat-card-value">${plays}</div>
+                    <div class="stat-card-label">Plays</div>
+                </div>
+                <div class="stat-card mini">
+                    <div class="stat-card-value">${searches}</div>
+                    <div class="stat-card-label">Searches</div>
+                </div>
+                <div class="stat-card mini">
+                    <div class="stat-card-value">${downloads}</div>
+                    <div class="stat-card-label">Downloads</div>
+                </div>
+            </div>
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>Live Feed <span class="badge badge-active" style="font-size:11px;animation:pulse 2s infinite">● LIVE</span></h3>
+                    <div class="table-actions"><span style="color:var(--text-muted);font-size:12px">Auto-refreshes every 30s</span></div>
+                </div>
+                ${feedHtml}
+            </div>
+        `;
+
+        // Auto refresh every 30s
+        if (!activityRefreshInterval) {
+            activityRefreshInterval = setInterval(() => {
+                if (currentPage === 'activity') renderActivityFeed();
+            }, 30000);
+        }
     } catch (e) {
-        toast('Gagal hapus: ' + e.message, 'error');
+        console.error('Activity feed error:', e);
+        c.innerHTML = '<div class="empty-state"><p>Failed to load activity feed</p></div>';
     }
 }
 
-function openRenewModal(id) { document.getElementById('renew-id').value = id; document.getElementById('modal-renew').classList.add('active'); }
-async function renewKey() {
-    try {
-        const id = document.getElementById('renew-id').value;
-        await api(`/api/admin/keys/${id}/renew`, { method: 'PUT', body: JSON.stringify({ days: parseInt(document.getElementById('renew-days').value) }) });
-        toast('Key diperpanjang!', 'success');
-        closeModal('modal-renew');
-        loadKeys();
-    } catch (e) { toast(e.message, 'error'); }
-}
-
 // ============================================================
-// DEVICES & IPs TAB
+// ACTIVE SESSIONS
 // ============================================================
-async function loadDevicesTab() {
-    try {
-        const [online, blocked] = await Promise.all([api('/api/admin/online'), api('/api/admin/blocked-ips')]);
 
-        document.getElementById('online-list').innerHTML = online.length === 0
-            ? '<p style="color:var(--muted);text-align:center;padding:20px">Tidak ada device online saat ini</p>'
-            : online.map(d => {
-                const displayName = d.device_name || d.device_model || 'Unknown Device';
-                return `<div class="device-card-enhanced">
-                <div class="device-card-left">
-                    <div class="device-avatar online">${getDeviceIcon(d.os_info)}</div>
-                    <div class="device-info-enhanced">
-                        <div class="device-name-row"><span class="pulse"></span><span class="device-display-name">${esc(displayName)}</span> <span class="badge badge-purple">${maskKey(d.license_key)}</span></div>
-                        <div class="device-meta-row">
-                            ${d.device_model ? `<span class="device-meta-tag">${icon('smartphone', 12)} ${esc(d.device_model)}</span>` : ''}
-                            ${d.os_info ? `<span class="device-meta-tag">${icon('monitor', 12)} ${esc(d.os_info)}</span>` : ''}
-                            <span class="device-meta-tag">${icon('globe', 12)} ${d.ip_address}</span>
-                            <span class="device-meta-tag dim">Last: ${fmtDate(d.last_seen)}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="device-card-right">
-                    <button class="btn btn-xs btn-warning" onclick="blockDev2(${d.id})">Block</button>
-                    <button class="btn btn-xs btn-ghost" onclick="addBlockedIP('${d.ip_address}','Online device')">${icon('ban', 12)} IP</button>
-                </div>
-            </div>`;
+async function renderActiveSessions() {
+    const c = document.getElementById('pageContent');
+    document.getElementById('headerActions').innerHTML = '<button class="btn btn-sm btn-secondary" data-action="refresh-sessions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Refresh</button>';
+    c.innerHTML = '<div class="loading-overlay"><div class="spinner"></div></div>';
+
+    try {
+        const data = await apiFetch('/api/admin/active-sessions');
+
+        let rows = '';
+        if (data.sessions && data.sessions.length) {
+            rows = data.sessions.map(s => {
+                const isExpiring = s.ttl_minutes < 30;
+                const ttlColor = isExpiring ? 'var(--warning)' : 'var(--success)';
+                return '<tr>' +
+                    '<td><span class="badge badge-active">● Online</span></td>' +
+                    '<td>' + esc(s.ip) + '</td>' +
+                    '<td><span class="license-key" data-action="copy" data-value="' + esc(s.license_key) + '" title="Click to copy">' + esc(s.license_key.substring(0, 16)) + '</span></td>' +
+                    '<td>' + esc(s.license_name || '-') + '</td>' +
+                    '<td>' + statusBadge(s.status) + '</td>' +
+                    '<td><span style="color:' + ttlColor + '">' + s.ttl_minutes + ' min</span></td>' +
+                    '<td><button class="btn btn-sm btn-secondary" data-action="view-user-activity" data-value="' + esc(s.license_key) + '">Activity</button></td>' +
+                    '</tr>';
             }).join('');
+        }
 
-        document.getElementById('blocked-list').innerHTML = blocked.length === 0
-            ? '<p style="color:var(--muted);text-align:center;padding:20px">Tidak ada IP yang diblokir</p>'
-            : blocked.map(b => `<div class="ip-item">
-                <div class="ip-addr">${icon('ban', 14)} ${b.ip_address}</div>
-                <div class="ip-reason">${esc(b.reason || '-')}</div>
-                <div style="font-size:11px;color:var(--muted)">${fmtDate(b.blocked_at)}</div>
-                <button class="btn btn-xs btn-success" onclick="removeBlockedIP('${b.ip_address}')">Unblock</button>
-            </div>`).join('');
-    } catch (e) { toast(e.message, 'error'); }
+        c.innerHTML = `
+            <div class="stats-grid" style="margin-bottom:20px">
+                <div class="stat-card mini">
+                    <div class="stat-card-value">${data.count || 0}</div>
+                    <div class="stat-card-label">Active Sessions</div>
+                </div>
+            </div>
+            <div class="table-container">
+                <div class="table-header"><h3>Connected Users</h3></div>
+                <table><thead><tr>
+                    <th>Status</th><th>IP Address</th><th>License Key</th><th>Name</th>
+                    <th>License Status</th><th>Session TTL</th><th>Actions</th>
+                </tr></thead>
+                <tbody>${rows || '<tr><td colspan="7"><div class="empty-state"><p>No active sessions</p></div></td></tr>'}</tbody></table>
+            </div>
+        `;
+    } catch (e) {
+        console.error('Active sessions error:', e);
+        c.innerHTML = '<div class="empty-state"><p>Failed to load sessions</p></div>';
+    }
 }
 
-async function blockDev2(devId) { try { await api(`/api/admin/devices/${devId}/block`, { method: 'POST' }); toast('Device diblokir', 'success'); loadDevicesTab(); } catch (e) { toast(e.message, 'error'); } }
+// ============================================================
+// PLUGIN USAGE
+// ============================================================
 
-async function addBlockedIP(ip, reason) {
-    if (!ip) { ip = document.getElementById('block-ip-input').value.trim(); reason = document.getElementById('block-ip-reason').value.trim(); }
-    if (!ip) return toast('IP wajib diisi', 'error');
+async function renderPluginUsage(page = 1) {
+    puPage = page;
+    const c = document.getElementById('pageContent');
+    document.getElementById('headerActions').innerHTML = '';
+    c.innerHTML = '<div class="loading-overlay"><div class="spinner"></div></div>';
     try {
-        await api('/api/admin/blocked-ips', { method: 'POST', body: JSON.stringify({ ip, reason }) });
-        toast(`IP ${ip} diblokir`, 'success');
-        if (document.getElementById('block-ip-input')) document.getElementById('block-ip-input').value = '';
-        if (document.getElementById('block-ip-reason')) document.getElementById('block-ip-reason').value = '';
-        loadDevicesTab();
-    } catch (e) { toast(e.message, 'error'); }
+        const data = await apiFetch(`/api/admin/plugin-usage?page=${page}&limit=50&search=${encodeURIComponent(puSearch)}`);
+        const tp = Math.ceil(data.total / data.limit);
+        let rows = data.logs?.length ? data.logs.map(l => `<tr>
+            <td>${esc(l.plugin_name)}</td>
+            <td><span class="badge badge-info">${esc(l.action)}</span></td>
+            <td><span class="license-key" data-action="copy" data-value="${esc(l.license_key)}">${esc(l.license_key?.substring(0, 15))}</span></td>
+            <td>${esc(l.device_id?.substring(0, 12) || '-')}</td>
+            <td>${esc(l.ip_address)}</td>
+            <td>${timeAgo(l.used_at)}</td>
+        </tr>`).join('') : '';
+
+        c.innerHTML = `<div class="table-container">
+            <div class="table-header"><h3>Plugin Activity (${data.total})</h3><div class="table-actions">${searchBox('puSearchInput', 'Search plugins...', 'pu-search')}</div></div>
+            <table><thead><tr><th>Plugin</th><th>Action</th><th>License</th><th>Device</th><th>IP</th><th>Time</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="6"><div class="empty-state"><p>No plugin activity</p></div></td></tr>'}</tbody></table>
+            <div class="table-footer"><span>Page ${page} of ${tp || 1}</span>${pagBtns(page, tp, 'pu-page')}</div>
+        </div>`;
+    } catch (e) { c.innerHTML = '<div class="empty-state"><p>Failed to load plugin usage</p></div>'; }
 }
 
-async function removeBlockedIP(ip) { try { await api(`/api/admin/blocked-ips/${encodeURIComponent(ip)}`, { method: 'DELETE' }); toast(`IP ${ip} di-unblock`, 'success'); loadDevicesTab(); } catch (e) { toast(e.message, 'error'); } }
+// ============================================================
+// PLAYBACK LOGS
+// ============================================================
 
-// ============================================================
-// PLUGIN ACTIVITY TAB
-// ============================================================
-async function loadPluginStats() {
+async function renderPlaybackLogs(page = 1) {
+    pbPage = page;
+    const c = document.getElementById('pageContent');
+    document.getElementById('headerActions').innerHTML = '';
+    c.innerHTML = '<div class="loading-overlay"><div class="spinner"></div></div>';
     try {
-        const stats = await api('/api/admin/plugin-stats');
+        const data = await apiFetch(`/api/admin/playback-logs?page=${page}&limit=50&search=${encodeURIComponent(pbSearch)}`);
+        const tp = Math.ceil(data.total / data.limit);
+        let rows = data.logs?.length ? data.logs.map(l => `<tr>
+            <td title="${esc(l.video_title)}">${esc(l.video_title?.substring(0, 40))}</td>
+            <td>${esc(l.plugin_name)}</td>
+            <td>${esc(l.source_provider || '-')}</td>
+            <td><span class="license-key" data-action="copy" data-value="${esc(l.license_key)}">${esc(l.license_key?.substring(0, 15))}</span></td>
+            <td>${esc(l.ip_address)}</td>
+            <td>${timeAgo(l.played_at)}</td>
+        </tr>`).join('') : '';
 
-        // Popular plugins
-        if (stats.popular && stats.popular.length > 0) {
-            const maxTotal = stats.popular[0].total;
-            document.getElementById('plugin-stats-popular').innerHTML = stats.popular.map(p => `
-                <div class="plugin-bar-item">
-                    <div class="plugin-bar-header">
-                        <span class="plugin-bar-name">${icon('plug', 14)} ${esc(p.plugin_name)}</span>
-                        <span class="plugin-bar-count">${p.total} total · ${p.downloads} downloads · ${p.unique_users} users</span>
-                    </div>
-                    <div class="plugin-bar-track">
-                        <div class="plugin-bar-fill" style="width:${Math.max(5, (p.total / maxTotal) * 100)}%">
-                            <span class="plugin-bar-dl">${icon('download', 12)}${p.downloads} ${icon('plug', 12)}${p.opens} ${icon('search', 12)}${p.searches || 0} ${icon('loader', 12)}${p.loads || 0} ${icon('play', 12)}${p.plays || 0}</span>
+        c.innerHTML = `<div class="table-container">
+            <div class="table-header"><h3>Playback History (${data.total})</h3><div class="table-actions">${searchBox('pbSearchInput', 'Search videos...', 'pb-search')}</div></div>
+            <table><thead><tr><th>Video Title</th><th>Plugin</th><th>Source</th><th>License</th><th>IP</th><th>Time</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="6"><div class="empty-state"><p>No playback logs</p></div></td></tr>'}</tbody></table>
+            <div class="table-footer"><span>Page ${page} of ${tp || 1}</span>${pagBtns(page, tp, 'pb-page')}</div>
+        </div>`;
+    } catch (e) { c.innerHTML = '<div class="empty-state"><p>Failed to load playback logs</p></div>'; }
+}
+
+// ============================================================
+// ACCESS LOGS
+// ============================================================
+
+async function renderAccessLogs(page = 1) {
+    alPage = page;
+    const c = document.getElementById('pageContent');
+    document.getElementById('headerActions').innerHTML = '';
+    c.innerHTML = '<div class="loading-overlay"><div class="spinner"></div></div>';
+    try {
+        const data = await apiFetch(`/api/admin/logs?page=${page}&limit=50&search=${encodeURIComponent(alSearch)}`);
+        const tp = Math.ceil(data.total / data.limit);
+        let rows = data.logs?.length ? data.logs.map(l => `<tr>
+            <td><span class="badge badge-info">${esc(l.action)}</span></td>
+            <td>${l.license_key ? `<span class="license-key" data-action="copy" data-value="${esc(l.license_key)}">${esc(l.license_key?.substring(0, 15))}</span>` : '-'}</td>
+            <td>${esc(l.ip_address)}</td>
+            <td title="${esc(l.details)}">${esc(l.details?.substring(0, 60) || '-')}</td>
+            <td>${timeAgo(l.created_at)}</td>
+        </tr>`).join('') : '';
+
+        c.innerHTML = `<div class="table-container">
+            <div class="table-header"><h3>Access Logs (${data.total})</h3><div class="table-actions">${searchBox('alSearchInput', 'Search logs...', 'al-search')}</div></div>
+            <table><thead><tr><th>Action</th><th>License</th><th>IP</th><th>Details</th><th>Time</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="5"><div class="empty-state"><p>No logs</p></div></td></tr>'}</tbody></table>
+            <div class="table-footer"><span>Page ${page} of ${tp || 1}</span>${pagBtns(page, tp, 'al-page')}</div>
+        </div>`;
+    } catch (e) { c.innerHTML = '<div class="empty-state"><p>Failed to load logs</p></div>'; }
+}
+
+// ============================================================
+// SECURITY
+// ============================================================
+
+async function renderSecurity() {
+    const c = document.getElementById('pageContent');
+    document.getElementById('headerActions').innerHTML = '';
+    c.innerHTML = '<div class="loading-overlay"><div class="spinner"></div></div>';
+    try {
+        const [failedRes, blockedRes] = await Promise.all([
+            apiFetch('/api/admin/security/failed-logins'),
+            apiFetch('/api/admin/security/blocked-ips')
+        ]);
+
+        let failedRows = failedRes.logs?.length
+            ? failedRes.logs.map(l => `<tr><td>${esc(l.ip_address)}</td><td>${l.attempt_count}</td><td>${formatDate(l.last_attempt)}</td></tr>`).join('')
+            : '<tr><td colspan="3"><div class="empty-state"><p>No failed logins</p></div></td></tr>';
+
+        let blockedRows = blockedRes.ips?.length
+            ? blockedRes.ips.map(ip => `<tr><td>${esc(ip.ip_address)}</td><td>${esc(ip.reason || '-')}</td><td>${formatDate(ip.created_at)}</td><td><button class="btn btn-sm btn-success" data-action="unblock-ip" data-value="${esc(ip.ip_address)}">Unblock</button></td></tr>`).join('')
+            : '<tr><td colspan="4"><div class="empty-state"><p>No blocked IPs</p></div></td></tr>';
+
+        c.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+            <div class="table-container">
+                <div class="table-header"><h3>Failed Login Attempts</h3></div>
+                <table><thead><tr><th>IP</th><th>Attempts</th><th>Last Attempt</th></tr></thead><tbody>${failedRows}</tbody></table>
+            </div>
+            <div class="table-container">
+                <div class="table-header"><h3>Blocked IPs</h3><button class="btn btn-sm btn-danger" data-action="open-block-ip-modal">Block IP</button></div>
+                <table><thead><tr><th>IP</th><th>Reason</th><th>Blocked At</th><th>Action</th></tr></thead><tbody>${blockedRows}</tbody></table>
+            </div>
+        </div>`;
+    } catch (e) { c.innerHTML = '<div class="empty-state"><p>Failed to load security data</p></div>'; }
+}
+
+function openBlockIPModal() {
+    openModal(`
+        <div class="modal-header"><h3>Block IP Address</h3><button class="btn-icon" data-action="close-modal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>IP Address</label><input type="text" id="blockIpAddr" placeholder="192.168.1.1"></div>
+            <div class="form-group"><label>Reason</label><input type="text" id="blockIpReason" placeholder="Optional reason"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" data-action="close-modal">Cancel</button>
+            <button class="btn btn-danger" data-action="block-ip-confirm">Block</button>
+        </div>
+    `);
+}
+
+async function blockIPConfirm() {
+    const ip = document.getElementById('blockIpAddr').value;
+    const reason = document.getElementById('blockIpReason').value;
+    if (!ip) { toast('IP required', 'error'); return; }
+    try {
+        await apiFetch('/api/admin/security/block-ip', { method: 'POST', body: JSON.stringify({ ip, reason }) });
+        toast('IP blocked', 'success');
+        closeModal();
+        renderSecurity();
+    } catch (e) { toast('Error', 'error'); }
+}
+
+async function unblockIP(ip) {
+    if (!confirm(`Unblock ${ip}?`)) return;
+    try {
+        await apiFetch('/api/admin/security/unblock-ip', { method: 'POST', body: JSON.stringify({ ip }) });
+        toast('IP unblocked', 'success');
+        renderSecurity();
+    } catch (e) { toast('Error', 'error'); }
+}
+
+// ============================================================
+// SETTINGS — with repo/GitHub integration guide
+// ============================================================
+
+async function renderSettings() {
+    const c = document.getElementById('pageContent');
+    document.getElementById('headerActions').innerHTML = '';
+    c.innerHTML = '<div class="loading-overlay"><div class="spinner"></div></div>';
+    try {
+        const data = await apiFetch('/api/admin/settings');
+        const s = data.settings || {};
+        const serverUrl = s.server_url || window.location.origin;
+
+        c.innerHTML = `
+            <div style="max-width:700px">
+                <!-- HOW IT WORKS -->
+                <div class="table-container" style="margin-bottom:24px">
+                    <div class="table-header"><h3>🔗 How Plugin Access Works</h3></div>
+                    <div style="padding:20px;font-size:13px;line-height:1.8;color:var(--text-secondary)">
+                        <div style="display:grid;grid-template-columns:auto 1fr;gap:12px 16px;align-items:start">
+                            <span style="background:var(--accent);color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">1</span>
+                            <div><strong style="color:var(--text-primary)">GitHub builds your plugins</strong><br>Your GitHub Actions workflow in <code>${esc(s.github_repo || 'Makairamei/CS')}</code> builds plugins into the <code>builds</code> branch, creating a <code>plugins.json</code> file.</div>
+
+                            <span style="background:var(--accent);color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">2</span>
+                            <div><strong style="color:var(--text-primary)">This server gates access</strong><br>Each license key gets a unique repo URL: <code style="color:var(--success)">${esc(serverUrl)}/r/{LICENSE_KEY}/repo.json</code><br>This server fetches plugins from your GitHub builds and serves them — only if the license is valid.</div>
+
+                            <span style="background:var(--accent);color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">3</span>
+                            <div><strong style="color:var(--text-primary)">User installs in CloudStream</strong><br>User goes to <strong>CloudStream → Settings → Extensions → Add Repository</strong> → pastes their unique repo URL → plugins appear.</div>
+
+                            <span style="background:var(--accent);color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">4</span>
+                            <div><strong style="color:var(--text-primary)">You control access</strong><br>Revoke license → user can't load plugins anymore. Block device → that specific device loses access. It's all managed from this dashboard.</div>
                         </div>
                     </div>
                 </div>
-            `).join('');
-        } else {
-            document.getElementById('plugin-stats-popular').innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px;font-size:13px">Belum ada aktivitas plugin. Data akan muncul saat user download/buka plugin.</p>';
-        }
 
-        // Recent activity
-        if (stats.recent && stats.recent.length > 0) {
-            document.getElementById('plugin-stats-recent').innerHTML = `
-            <div class="table-wrap" style="max-height:400px;overflow-y:auto">
-                <table><thead><tr><th>Waktu</th><th>Plugin</th><th>Aksi</th><th>Detail</th><th>Key</th><th>User</th><th>Device</th><th>IP</th></tr></thead>
-                <tbody>${stats.recent.map(r => {
-                const keyParts = (r.license_key || '').split('-');
-                const keyLabel = keyParts.length >= 2 ? `${keyParts[0]}-${keyParts[1]}` : '-';
-                const userName = r.license_name || r.license_note || '-';
-                const devName = r.device_name && r.device_name !== 'Unknown' ? r.device_name : '-';
-                const detail = r.data ? r.data : '-';
-                return `<tr>
-                    <td style="font-size:11px;color:var(--muted)">${fmtDate(r.created_at)}</td>
-                    <td style="font-weight:600">${icon('plug', 14)} ${esc(r.plugin_name)}</td>
-                    <td><span class="badge ${r.action === 'DOWNLOAD' ? 'badge-purple' : 'badge-cyan'}">${r.action}</span></td>
-                    <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(detail)}">${esc(detail)}</td>
-                    <td><span class="badge badge-cyan" style="font-size:10px">${keyLabel}</span></td>
-                    <td style="font-size:12px">${esc(userName)}</td>
-                    <td style="font-size:12px;font-weight:600">${esc(devName)}</td>
-                    <td style="font-size:12px">${r.ip_address || '-'}</td>
-                </tr>`;
-            }).join('')}</tbody></table>
-            </div>`;
-        } else {
-            document.getElementById('plugin-stats-recent').innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px;font-size:13px">Belum ada aktivitas plugin terbaru.</p>';
-        }
-    } catch (e) { toast(e.message, 'error'); }
+                <!-- SERVER CONFIG -->
+                <div class="table-container" style="margin-bottom:24px">
+                    <div class="table-header"><h3>⚙️ Server Configuration</h3></div>
+                    <div style="padding:24px">
+                        <div class="form-group">
+                            <label>Server URL (public URL of this server)</label>
+                            <input type="text" id="setServerUrl" value="${esc(s.server_url || '')}" placeholder="http://your-vps-ip:3000 or https://yourdomain.com">
+                            <p style="font-size:11px;color:var(--text-muted);margin-top:4px">Must be accessible from the internet for users. Use your VPS IP or domain name.</p>
+                        </div>
+                        <div class="form-group">
+                            <label>GitHub Repository (owner/repo)</label>
+                            <input type="text" id="setGithubRepo" value="${esc(s.github_repo || '')}" placeholder="Makairamei/CS">
+                            <p style="font-size:11px;color:var(--text-muted);margin-top:4px">Your GitHub repo that builds plugins via Actions workflow.</p>
+                        </div>
+                        <div class="form-group">
+                            <label>Upstream Plugins URL</label>
+                            <input type="text" id="setUpstreamUrl" value="${esc(s.upstream_plugins_url || '')}" placeholder="https://raw.githubusercontent.com/Makairamei/CS/builds/plugins.json">
+                            <p style="font-size:11px;color:var(--text-muted);margin-top:4px">Direct URL to your plugins.json in the builds branch. This is where plugins get fetched from.</p>
+                        </div>
+                        <button class="btn btn-primary" data-action="save-settings">Save Settings</button>
+                    </div>
+                </div>
+
+                <!-- PASSWORD -->
+                <div class="table-container">
+                    <div class="table-header"><h3>🔐 Change Password</h3></div>
+                    <div style="padding:24px">
+                        <div class="form-group"><label>Current Password</label><input type="password" id="currentPwd" placeholder="••••••"></div>
+                        <div class="form-group"><label>New Password</label><input type="password" id="newPwd" placeholder="••••••"></div>
+                        <button class="btn btn-primary" data-action="change-password">Change Password</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    } catch (e) { c.innerHTML = '<div class="empty-state"><p>Failed to load settings</p></div>'; }
 }
 
-// ============================================================
-// LOGS (with search)
-// ============================================================
-async function loadAllLogs() {
-    try {
-        const logs = await api('/api/admin/logs?limit=200');
-        renderLogs(logs);
-    } catch (e) { toast(e.message, 'error'); }
-}
-
-function debounceSearch() {
-    if (searchDebounce) clearTimeout(searchDebounce);
-    searchDebounce = setTimeout(searchLogsFilter, 300);
-}
-
-async function searchLogsFilter() {
-    const query = document.getElementById('log-search-input').value.trim();
-    const action = document.getElementById('log-action-filter').value;
-    try {
-        const logs = await api(`/api/admin/logs/search?query=${encodeURIComponent(query)}&action=${encodeURIComponent(action)}&limit=200`);
-        renderLogs(logs);
-    } catch (e) { toast(e.message, 'error'); }
-}
-
-function renderLogs(logs) {
-    document.getElementById('all-logs').innerHTML = logs.length === 0
-        ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:30px">Tidak ada log yang cocok</td></tr>'
-        : logs.map(l => `
-        <tr>
-            <td style="font-size:11px;color:var(--muted)">${fmtDate(l.created_at)}</td>
-            <td class="key-masked">${maskKey(l.license_key)}</td>
-            <td><span class="badge ${actionBadge(l.action)}">${l.action}</span></td>
-            <td style="font-size:12px">${l.ip_address || '-'}</td>
-            <td style="font-size:11px;color:var(--muted);max-width:300px;overflow:hidden;text-overflow:ellipsis">${esc(l.details || '-')}</td>
-        </tr>
-    `).join('');
-}
-
-// ============================================================
-// SETTINGS
-// ============================================================
-async function loadSettings() {
-    try {
-        const s = await api('/api/admin/settings');
-        document.getElementById('setting-server-url').value = s.server_url || '';
-        document.getElementById('setting-proxy').checked = s.proxy_downloads === 'true';
-    } catch (e) { toast(e.message, 'error'); }
-}
 async function saveSettings() {
     try {
-        await api('/api/admin/settings', {
-            method: 'POST',
-            body: JSON.stringify({ server_url: document.getElementById('setting-server-url').value.trim(), proxy_downloads: document.getElementById('setting-proxy').checked })
-        });
-        toast('Settings disimpan!', 'success');
-    } catch (e) { toast(e.message, 'error'); }
+        const settings = {
+            server_url: document.getElementById('setServerUrl').value,
+            github_repo: document.getElementById('setGithubRepo').value,
+            upstream_plugins_url: document.getElementById('setUpstreamUrl').value
+        };
+        await apiFetch('/api/admin/settings', { method: 'PUT', body: JSON.stringify({ settings }) });
+        toast('Settings saved', 'success');
+    } catch (e) { toast('Error saving', 'error'); }
 }
 
-// Password
-function openPasswordModal() { document.getElementById('modal-password').classList.add('active'); }
-async function changePass() {
+async function changePassword() {
+    const curr = document.getElementById('currentPwd').value;
+    const newP = document.getElementById('newPwd').value;
+    if (!curr || !newP) { toast('Fill both fields', 'error'); return; }
     try {
-        await api('/api/admin/change-password', { method: 'POST', body: JSON.stringify({ new_password: document.getElementById('new-pass').value }) });
-        toast('Password diganti!', 'success');
-        closeModal('modal-password');
-    } catch (e) { toast(e.message, 'error'); }
+        const res = await apiFetch('/api/admin/password', { method: 'PUT', body: JSON.stringify({ current_password: curr, new_password: newP }) });
+        if (res.status === 'ok') {
+            toast('Password changed', 'success');
+            document.getElementById('currentPwd').value = '';
+            document.getElementById('newPwd').value = '';
+        } else { toast(res.message || 'Failed', 'error'); }
+    } catch (e) { toast('Error', 'error'); }
 }
 
-// Utils
-async function downloadBackup() {
+// ============================================================
+// USER ACTIVITY DETAIL (Modal)
+// ============================================================
+
+async function viewUserActivity(licenseKey) {
+    openModal('<div class="loading-overlay"><div class="spinner"></div></div>');
     try {
-        const res = await fetch('/api/admin/backup', {
-            headers: { 'Authorization': 'Bearer ' + TOKEN }
-        });
-        if (!res.ok) throw new Error('Download gagal');
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `backup-premium-${new Date().toISOString().slice(0, 10)}.db`;
-        a.click();
-        URL.revokeObjectURL(url);
-        toast('Backup berhasil didownload', 'success');
-    } catch (e) { toast(e.message, 'error'); }
-}
+        const d = await apiFetch('/api/admin/analytics/user/' + encodeURIComponent(licenseKey) + '?days=7');
 
-function triggerUpload() {
-    document.getElementById('db-upload-input').click();
-}
+        let pluginRows = '';
+        if (d.pluginUsage && d.pluginUsage.length) {
+            pluginRows = '<table style="font-size:12px"><thead><tr><th>Plugin</th><th>Action</th><th>Count</th><th>Last Used</th></tr></thead><tbody>' +
+                d.pluginUsage.map(p =>
+                    '<tr><td>' + esc(p.plugin_name) + '</td><td><span class="badge badge-info">' + esc(p.action) + '</span></td>' +
+                    '<td>' + p.count + '</td><td>' + timeAgo(p.last_used) + '</td></tr>'
+                ).join('') + '</tbody></table>';
+        } else {
+            pluginRows = '<div class="empty-state"><p>No plugin activity</p></div>';
+        }
 
-async function uploadRestore(input) {
-    const file = input.files[0];
-    if (!file) return;
-    if (!file.name.endsWith('.db')) { toast('File harus berformat .db', 'error'); return; }
+        let playbackRows = '';
+        if (d.playbackHistory && d.playbackHistory.length) {
+            playbackRows = '<table style="font-size:12px"><thead><tr><th>Video</th><th>Plugin</th><th>Source</th><th>Time</th></tr></thead><tbody>' +
+                d.playbackHistory.slice(0, 30).map(p =>
+                    '<tr><td title="' + esc(p.video_title) + '">' + esc(p.video_title?.substring(0, 35)) + '</td>' +
+                    '<td>' + esc(p.plugin_name) + '</td>' +
+                    '<td>' + (p.source_provider === 'DOWNLOAD' ? '<span class="badge badge-expired">DOWNLOAD</span>' : esc(p.source_provider || 'PLAY')) + '</td>' +
+                    '<td>' + timeAgo(p.played_at) + '</td></tr>'
+                ).join('') + '</tbody></table>';
+        } else {
+            playbackRows = '<div class="empty-state"><p>No playback history</p></div>';
+        }
 
-    showConfirm('Restore Database?', 'Database saat ini akan DIGANTI dengan file backup. Server akan restart otomatis. Lanjutkan?', async () => {
-        try {
-            const formData = new FormData();
-            formData.append('database', file);
+        let deviceRows = '';
+        if (d.devices && d.devices.length) {
+            deviceRows = '<table style="font-size:12px"><thead><tr><th>Device</th><th>IP</th><th>Last Seen</th><th>Status</th></tr></thead><tbody>' +
+                d.devices.map(dev =>
+                    '<tr><td>' + esc(dev.device_name || dev.device_id?.substring(0, 16)) + '</td>' +
+                    '<td>' + esc(dev.ip_address) + '</td>' +
+                    '<td>' + timeAgo(dev.last_seen) + '</td>' +
+                    '<td>' + (dev.is_blocked ? '<span class="badge badge-blocked">Blocked</span>' : '<span class="badge badge-active">Active</span>') + '</td></tr>'
+                ).join('') + '</tbody></table>';
+        } else {
+            deviceRows = '<div class="empty-state"><p>No devices</p></div>';
+        }
 
-            const res = await fetch('/api/admin/restore', {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + TOKEN },
-                body: formData
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Upload gagal');
-            toast(data.message, 'success');
-            // Reload after delay for server restart
-            setTimeout(() => location.reload(), 3000);
-        } catch (e) { toast(e.message, 'error'); }
-    });
-    input.value = ''; // Reset input
-}
-function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-function maskKey(k) { if (!k) return ''; const p = k.split('-'); return p[0] + '-****-****-' + p[p.length - 1]; }
-function fmtDate(d) {
-    if (!d) return '-';
-    // Force UTC parsing if no timezone specified (server returns UTC without Z)
-    const dateStr = d.endsWith('Z') ? d : d + 'Z';
-    return new Date(dateStr).toLocaleString('id-ID', {
-        timeZone: 'Asia/Jakarta',
-        year: '2-digit', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit'
-    });
-}
-function actionBadge(a) {
-    const map = {
-        'VALID': 'badge-green', 'REPO_ACCESS': 'badge-green', 'DOWNLOAD': 'badge-purple', 'PLUGIN_OPEN': 'badge-cyan', 'PLUGIN_CHECK': 'badge-cyan',
-        'SEARCH': 'badge-blue', 'LOAD': 'badge-yellow', 'PLAY': 'badge-green',
-        'DOWNLOAD_ERROR': 'badge-yellow', 'MAX_DEVICES': 'badge-yellow', 'BLOCKED_IP': 'badge-red', 'DEVICE_BLOCKED': 'badge-red',
-        'REVOKED': 'badge-red', 'EXPIRED': 'badge-yellow', 'INVALID_KEY': 'badge-red'
-    };
-    return map[a] || 'badge-red';
-}
-function copyUrl(el) {
-    const text = el.getAttribute('data-url') || el.textContent.trim();
-    copyText(text);
-}
-function copyText(text) {
-    try {
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        ta.style.position = 'fixed';
-        ta.style.left = '-9999px';
-        ta.style.top = '-9999px';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.focus();
-        ta.select();
-        ta.setSelectionRange(0, ta.value.length);
-        const ok = document.execCommand('copy');
-        document.body.removeChild(ta);
-        if (ok) { toast('Copied: ' + text.substring(0, 50) + '...', 'success'); return; }
-    } catch (e) { }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => toast('Copied!', 'success')).catch(() => toast('Gagal copy, salin manual', 'error'));
-    } else {
-        window.prompt('Salin URL ini:', text);
+        const mc = document.getElementById('modalContent');
+        mc.className = 'modal modal-lg';
+        mc.innerHTML =
+            '<div class="modal-header"><h3>User Activity</h3>' +
+            '<button class="btn-icon" data-action="close-modal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>' +
+            '<div class="modal-body" style="padding:0">' +
+            '<div style="padding:20px 24px;border-bottom:1px solid var(--border)">' +
+            '<div style="font-family:monospace;font-size:15px;font-weight:600;color:var(--accent)">' + esc(licenseKey) + '</div>' +
+            '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">' + esc(d.license?.name || 'Unnamed') + ' · ' + statusBadge(d.license?.status || 'unknown') + ' · Period: ' + esc(d.period) + '</div></div>' +
+            '<div style="padding:20px 24px">' +
+            '<div class="inline-tabs">' +
+            '<button class="inline-tab active" data-action="detail-tab" data-value="ua-plugins">Plugin Usage (' + (d.pluginUsage?.length || 0) + ')</button>' +
+            '<button class="inline-tab" data-action="detail-tab" data-value="ua-playback">Playback (' + (d.playbackHistory?.length || 0) + ')</button>' +
+            '<button class="inline-tab" data-action="detail-tab" data-value="ua-devices">Devices (' + (d.devices?.length || 0) + ')</button>' +
+            '</div>' +
+            '<div class="tab-panel active" data-tab="ua-plugins">' + pluginRows + '</div>' +
+            '<div class="tab-panel" data-tab="ua-playback">' + playbackRows + '</div>' +
+            '<div class="tab-panel" data-tab="ua-devices">' + deviceRows + '</div>' +
+            '</div></div>' +
+            '<div class="modal-footer"><button class="btn btn-secondary" data-action="close-modal">Close</button></div>';
+    } catch (e) {
+        console.error('User activity error:', e);
+        document.getElementById('modalContent').innerHTML = '<div class="modal-body"><div class="empty-state"><p>Failed to load user activity</p></div></div>';
     }
 }
