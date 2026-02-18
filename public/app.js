@@ -373,20 +373,40 @@ function updateSelectUI() {
 
 function copyToClipboard(text) {
     if (!text) return;
-    navigator.clipboard.writeText(text).then(() => {
-        toast('Copied!', 'success');
-    }).catch(() => {
-        // Fallback for older browsers
+
+    // Try modern API first (if available and secure context)
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            toast('Copied!', 'success');
+        }).catch((err) => {
+            console.warn('Clipboard API failed, trying fallback', err);
+            fallbackCopy(text);
+        });
+    } else {
+        // Fallback for HTTP or older browsers
+        fallbackCopy(text);
+    }
+}
+
+function fallbackCopy(text) {
+    try {
         const ta = document.createElement('textarea');
         ta.value = text;
         ta.style.position = 'fixed';
+        ta.style.left = '0';
+        ta.style.top = '0';
         ta.style.opacity = '0';
         document.body.appendChild(ta);
+        ta.focus();
         ta.select();
-        document.execCommand('copy');
-        ta.remove();
-        toast('Copied!', 'success');
-    });
+        const successful = document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (successful) toast('Copied!', 'success');
+        else toast('Copy failed', 'error');
+    } catch (err) {
+        console.error('Fallback copy failed', err);
+        toast('Copy failed', 'error');
+    }
 }
 
 function openModal(html) {
