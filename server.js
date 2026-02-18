@@ -34,6 +34,17 @@ app.use(helmet({
 
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
+app.use((req, res, next) => {
+    // Normalize URL path: replace double slashes with single slash, ignore query params
+    const qIndex = req.url.indexOf('?');
+    const path = qIndex === -1 ? req.url : req.url.substring(0, qIndex);
+
+    if (path.includes('//')) {
+        const newPath = path.replace(/\/{2,}/g, '/');
+        req.url = newPath + (qIndex === -1 ? '' : req.url.substring(qIndex));
+    }
+    next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ============================================================
@@ -396,19 +407,71 @@ app.get('/r/:key/plugins.json', rateLimit(60000, 60), async (req, res) => {
             return res.status(403).json({ status: 'error', message: 'License expired' });
         }
 
-        // Fetch from upstream builds branch
-        const upstream = db.getSetting('upstream_plugins_url') || 'https://raw.githubusercontent.com/Makairamei/CS/builds/plugins.json';
-
-        const response = await fetch(upstream);
-        if (!response.ok) {
-            return res.status(502).json({ status: 'error', message: 'Failed to fetch plugins' });
+        // Fetch from upstream repositories
+        let upstreamUrls = [];
+        try {
+            const setting = db.getSetting('upstream_urls');
+            if (setting) upstreamUrls = JSON.parse(setting);
+        } catch (e) {
+            // Fallback to legacy setting if new one doesn't exist
+            const legacy = db.getSetting('upstream_plugins_url');
+            if (legacy) upstreamUrls = [{ url: legacy, active: true }];
         }
 
-        const plugins = await response.json();
+        if (!Array.isArray(upstreamUrls) || upstreamUrls.length === 0) {
+            // Default fallback
+            upstreamUrls = [{ url: 'https://raw.githubusercontent.com/Makairamei/CS/builds/plugins.json', active: true }];
+        }
+
+        // Fetch all active upstreams in parallel
+        const fetchPromises = upstreamUrls
+            .filter(u => u.active && u.url)
+            .map(async (u) => {
+                try {
+                    const res = await fetch(u.url, { signal: AbortSignal.timeout(5000) }); // 5s timeout
+                    if (!res.ok) return [];
+                    const json = await res.json();
+                    return Array.isArray(json) ? json : [];
+                } catch (err) {
+                    console.error(`Failed to fetch upstream ${u.url}:`, err.message);
+                    return [];
+                }
+            });
+
+        const results = await Promise.all(fetchPromises);
+
+        // Merge and Deduplicate (by internalName)
+        const pluginMap = new Map();
+        results.flat().forEach(p => {
+            if (p && p.internalName) {
+                // Later sources overwrite earlier ones if duplicate (allows overriding)
+                pluginMap.set(p.internalName, p);
+            }
+        });
+
+        const plugins = Array.from(pluginMap.values());
         res.json(plugins);
     } catch (e) {
         console.error('Plugins.json error:', e.message);
         res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+});
+
+// Test Upstream URL
+app.post('/api/admin/test-repo', authMiddleware, async (req, res) => {
+    try {
+        const { url } = req.body;
+        if (!url) return res.status(400).json({ status: 'error', message: 'URL required' });
+
+        const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
+        if (!response.ok) return res.status(400).json({ status: 'error', message: `Status ${response.status}` });
+
+        const json = await response.json();
+        if (!Array.isArray(json)) return res.status(400).json({ status: 'error', message: 'Invalid JSON: expected array' });
+
+        res.json({ status: 'ok', count: json.length });
+    } catch (e) {
+        res.status(400).json({ status: 'error', message: 'Fetch failed: ' + e.message });
     }
 });
 

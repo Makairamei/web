@@ -429,7 +429,8 @@ async function renderLicenses(page = 1) {
             apiFetch('/api/admin/settings')
         ]);
 
-        const serverUrl = (settingsRes.settings && settingsRes.settings.server_url) ? settingsRes.settings.server_url : window.location.origin;
+        const rawServerUrl = (settingsRes.settings && settingsRes.settings.server_url) ? settingsRes.settings.server_url : window.location.origin;
+        const serverUrl = rawServerUrl.replace(/\/+$/, '');
         const tp = Math.ceil(data.total / data.limit);
 
         // Get counts for filter tabs
@@ -771,7 +772,8 @@ async function createLicense() {
         if (res.status === 'ok') {
             // Fetch settings to get server URL
             const settingsRes = await apiFetch('/api/admin/settings');
-            const serverUrl = (settingsRes.settings && settingsRes.settings.server_url) ? settingsRes.settings.server_url : window.location.origin;
+            const rawServerUrl = (settingsRes.settings && settingsRes.settings.server_url) ? settingsRes.settings.server_url : window.location.origin;
+            const serverUrl = rawServerUrl.replace(/\/+$/, '');
 
             if (res.keys) {
                 var keysList = res.keys.map(function (k) {
@@ -1212,7 +1214,24 @@ async function renderSettings() {
     try {
         const data = await apiFetch('/api/admin/settings');
         const s = data.settings || {};
-        const serverUrl = s.server_url || window.location.origin;
+        const serverUrl = cleanServerUrl(s.server_url || window.location.origin);
+
+        // Parse upstream URLs
+        let upstreamUrls = [];
+        try {
+            if (s.upstream_urls) upstreamUrls = JSON.parse(s.upstream_urls);
+            else if (s.upstream_plugins_url) upstreamUrls = [{ url: s.upstream_plugins_url, active: true }];
+        } catch (e) { }
+
+        if (!upstreamUrls.length) upstreamUrls = [{ url: '', active: true }];
+
+        const repoRows = upstreamUrls.map((u, i) => `
+            <div class="repo-row" style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+                <input type="text" class="repo-url-input" value="${esc(u.url)}" placeholder="https://..." style="flex:1">
+                <button class="btn btn-sm btn-secondary" onclick="testRepo(this)">Test</button>
+                <button class="btn btn-sm btn-danger" onclick="this.closest('.repo-row').remove()">✖</button>
+            </div>
+        `).join('');
 
         c.innerHTML = `
             <div style="max-width:700px">
@@ -1225,13 +1244,10 @@ async function renderSettings() {
                             <div><strong style="color:var(--text-primary)">GitHub builds your plugins</strong><br>Your GitHub Actions workflow in <code>${esc(s.github_repo || 'Makairamei/CS')}</code> builds plugins into the <code>builds</code> branch, creating a <code>plugins.json</code> file.</div>
 
                             <span style="background:var(--accent);color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">2</span>
-                            <div><strong style="color:var(--text-primary)">This server gates access</strong><br>Each license key gets a unique repo URL: <code style="color:var(--success)">${esc(serverUrl)}/r/{LICENSE_KEY}/repo.json</code><br>This server fetches plugins from your GitHub builds and serves them — only if the license is valid.</div>
+                            <div><strong style="color:var(--text-primary)">This server gates access</strong><br>Each license key gets a unique repo URL: <code style="color:var(--success)">${esc(serverUrl)}/r/{LICENSE_KEY}/repo.json</code><br>This server fetches plugins from your upstream repositories and serves them — only if the license is valid.</div>
 
                             <span style="background:var(--accent);color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">3</span>
                             <div><strong style="color:var(--text-primary)">User installs in CloudStream</strong><br>User goes to <strong>CloudStream → Settings → Extensions → Add Repository</strong> → pastes their unique repo URL → plugins appear.</div>
-
-                            <span style="background:var(--accent);color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">4</span>
-                            <div><strong style="color:var(--text-primary)">You control access</strong><br>Revoke license → user can't load plugins anymore. Block device → that specific device loses access. It's all managed from this dashboard.</div>
                         </div>
                     </div>
                 </div>
@@ -1242,19 +1258,21 @@ async function renderSettings() {
                     <div style="padding:24px">
                         <div class="form-group">
                             <label>Server URL (public URL of this server)</label>
-                            <input type="text" id="setServerUrl" value="${esc(s.server_url || '')}" placeholder="http://your-vps-ip:3000 or https://yourdomain.com">
-                            <p style="font-size:11px;color:var(--text-muted);margin-top:4px">Must be accessible from the internet for users. Use your VPS IP or domain name.</p>
+                            <input type="text" id="setServerUrl" value="${esc(s.server_url || '')}" placeholder="http://your-vps-ip:3000">
+                            <p style="font-size:11px;color:var(--text-muted);margin-top:4px">Must be accessible from the internet. Do not include trailing slash.</p>
                         </div>
                         <div class="form-group">
-                            <label>GitHub Repository (owner/repo)</label>
+                            <label>GitHub Repository</label>
                             <input type="text" id="setGithubRepo" value="${esc(s.github_repo || '')}" placeholder="Makairamei/CS">
-                            <p style="font-size:11px;color:var(--text-muted);margin-top:4px">Your GitHub repo that builds plugins via Actions workflow.</p>
                         </div>
+                        
                         <div class="form-group">
-                            <label>Upstream Plugins URL</label>
-                            <input type="text" id="setUpstreamUrl" value="${esc(s.upstream_plugins_url || '')}" placeholder="https://raw.githubusercontent.com/Makairamei/CS/builds/plugins.json">
-                            <p style="font-size:11px;color:var(--text-muted);margin-top:4px">Direct URL to your plugins.json in the builds branch. This is where plugins get fetched from.</p>
+                            <label>Upstream Plugin Repositories</label>
+                            <div id="repoList">${repoRows}</div>
+                            <button class="btn btn-sm btn-secondary" onclick="addRepoRow()" style="margin-top:8px">+ Add Repository</button>
+                            <p style="font-size:11px;color:var(--text-muted);margin-top:8px">Direct URLs to <code>plugins.json</code>. The server will merge plugins from all these sources.</p>
                         </div>
+
                         <button class="btn btn-primary" data-action="save-settings">Save Settings</button>
                     </div>
                 </div>
@@ -1273,13 +1291,60 @@ async function renderSettings() {
     } catch (e) { c.innerHTML = '<div class="empty-state"><p>Failed to load settings</p></div>'; }
 }
 
+function addRepoRow() {
+    const div = document.createElement('div');
+    div.className = 'repo-row';
+    div.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;align-items:center';
+    div.innerHTML = `
+        <input type="text" class="repo-url-input" placeholder="https://..." style="flex:1">
+        <button class="btn btn-sm btn-secondary" onclick="testRepo(this)">Test</button>
+        <button class="btn btn-sm btn-danger" onclick="this.closest('.repo-row').remove()">✖</button>
+    `;
+    document.getElementById('repoList').appendChild(div);
+}
+
+async function testRepo(btn) {
+    const row = btn.closest('.repo-row');
+    const url = row.querySelector('input').value;
+    if (!url) return toast('Enter URL first', 'error');
+
+    const originalText = btn.innerText;
+    btn.innerText = 'Testing...';
+    btn.disabled = true;
+
+    try {
+        const res = await apiFetch('/api/admin/test-repo', { method: 'POST', body: JSON.stringify({ url }) });
+        if (res.status === 'ok') {
+            toast(`Success! Found ${res.count} plugins.`, 'success');
+            btn.innerText = '✅ OK';
+        } else {
+            toast(res.message, 'error');
+            btn.innerText = '❌ Fail';
+        }
+    } catch (e) {
+        toast('Connection failed', 'error');
+        btn.innerText = '❌ Error';
+    }
+
+    setTimeout(() => {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }, 3000);
+}
+
 async function saveSettings() {
     try {
+        const repoInputs = document.querySelectorAll('.repo-url-input');
+        const upstreamUrls = Array.from(repoInputs)
+            .map(input => ({ url: input.value.trim(), active: true }))
+            .filter(u => u.url);
+
         const settings = {
-            server_url: document.getElementById('setServerUrl').value,
+            server_url: document.getElementById('setServerUrl').value.replace(/\/+$/, ''),
             github_repo: document.getElementById('setGithubRepo').value,
-            upstream_plugins_url: document.getElementById('setUpstreamUrl').value
+            upstream_urls: JSON.stringify(upstreamUrls)
         };
+
         await apiFetch('/api/admin/settings', { method: 'PUT', body: JSON.stringify({ settings }) });
         toast('Settings saved', 'success');
     } catch (e) { toast('Error saving', 'error'); }
