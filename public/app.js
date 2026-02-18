@@ -423,7 +423,13 @@ async function renderLicenses(page = 1) {
         const isTrashed = licFilter === 'trashed';
         const statusParam = isTrashed ? '' : (licFilter || '');
         const trashedParam = isTrashed ? 'true' : 'false';
-        const data = await apiFetch('/api/admin/licenses?page=' + page + '&limit=15&search=' + encodeURIComponent(licSearch) + '&status=' + statusParam + '&trashed=' + trashedParam);
+
+        const [data, settingsRes] = await Promise.all([
+            apiFetch('/api/admin/licenses?page=' + page + '&limit=15&search=' + encodeURIComponent(licSearch) + '&status=' + statusParam + '&trashed=' + trashedParam),
+            apiFetch('/api/admin/settings')
+        ]);
+
+        const serverUrl = (settingsRes.settings && settingsRes.settings.server_url) ? settingsRes.settings.server_url : window.location.origin;
         const tp = Math.ceil(data.total / data.limit);
 
         // Get counts for filter tabs
@@ -497,7 +503,10 @@ async function renderLicenses(page = 1) {
 
                 return '<tr class="' + (isSelected ? 'selected' : '') + '">' +
                     checkCol +
-                    '<td><span class="license-key" data-action="copy" data-value="' + esc(l.license_key) + '" title="Click to copy">' + esc(l.license_key) + '</span></td>' +
+                    '<td><div style="display:flex;align-items:center;gap:6px">' +
+                    '<span class="license-key" data-action="copy" data-value="' + esc(l.license_key) + '" title="Copy License Key">' + esc(l.license_key) + '</span>' +
+                    '<button class="btn btn-sm btn-secondary" style="padding:2px 6px;height:24px" data-action="copy" data-value="' + esc(serverUrl + '/r/' + l.license_key + '/repo.json') + '" title="Copy Repo URL">🔗</button>' +
+                    '</div></td>' +
                     '<td>' + esc(l.name || '-') + '</td>' +
                     '<td>' + statusDisplay + '</td>' +
                     '<td><span class="badge badge-info">' + (l.device_count || 0) + '/' + l.max_devices + '</span></td>' +
@@ -760,22 +769,47 @@ async function createLicense() {
             body: JSON.stringify({ duration_days: duration, name: name, note: note, max_devices: maxDev, count: count })
         });
         if (res.status === 'ok') {
+            // Fetch settings to get server URL
+            const settingsRes = await apiFetch('/api/admin/settings');
+            const serverUrl = (settingsRes.settings && settingsRes.settings.server_url) ? settingsRes.settings.server_url : window.location.origin;
+
             if (res.keys) {
-                var keysList = res.keys.map(function (k) { return '<div style="font-family:monospace;font-size:12px;padding:4px 0;color:var(--accent)">' + esc(k) + '</div>'; }).join('');
+                var keysList = res.keys.map(function (k) {
+                    var url = serverUrl + '/r/' + k + '/repo.json';
+                    return '<div style="border-bottom:1px solid var(--border);padding:8px 0">' +
+                        '<div style="font-family:monospace;font-size:12px;color:var(--accent)">' + esc(k) + '</div>' +
+                        '<div style="font-size:11px;color:var(--text-muted);word-break:break-all;margin-top:2px">' + esc(url) + '</div>' +
+                        '</div>';
+                }).join('');
+
+                var allUrls = res.keys.map(k => serverUrl + '/r/' + k + '/repo.json').join('\n');
+
                 document.getElementById('modalContent').innerHTML =
                     '<div class="modal-header"><h3>\u2705 ' + res.keys.length + ' Licenses Created</h3>' +
                     '<button class="btn-icon" data-action="close-modal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>' +
                     '<div class="modal-body" style="max-height:50vh;overflow-y:auto">' +
-                    '<button class="btn btn-sm btn-secondary" data-action="copy" data-value="' + esc(res.keys.join('\n')) + '" style="margin-bottom:12px">Copy All Keys</button>' +
+                    '<button class="btn btn-sm btn-secondary" data-action="copy" data-value="' + esc(allUrls) + '" style="margin-bottom:12px">Copy All URLs</button>' +
                     keysList + '</div>' +
                     '<div class="modal-footer"><button class="btn btn-primary" data-action="close-modal">Done</button></div>';
             } else {
+                var url = serverUrl + '/r/' + res.key + '/repo.json';
                 document.getElementById('modalContent').innerHTML =
                     '<div class="modal-header"><h3>\u2705 License Created</h3>' +
                     '<button class="btn-icon" data-action="close-modal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>' +
-                    '<div class="modal-body"><div style="background:var(--bg-tertiary);border-radius:var(--radius-sm);padding:14px;text-align:center">' +
-                    '<div style="font-family:monospace;font-size:16px;color:var(--accent);font-weight:600;margin-bottom:8px">' + esc(res.key) + '</div>' +
-                    '<button class="btn btn-sm btn-primary" data-action="copy" data-value="' + esc(res.key) + '">Copy Key</button></div></div>' +
+                    '<div class="modal-body">' +
+                    '<div style="background:var(--bg-tertiary);border-radius:var(--radius-sm);padding:16px;">' +
+                    '<div style="margin-bottom:12px">' +
+                    '<div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">License Key</div>' +
+                    '<div style="font-family:monospace;font-size:14px;color:var(--accent);font-weight:600;display:flex;gap:8px;align-items:center">' +
+                    esc(res.key) +
+                    '<button class="btn btn-sm btn-secondary" style="padding:2px 8px;font-size:10px" data-action="copy" data-value="' + esc(res.key) + '">COPY</button>' +
+                    '</div></div>' +
+                    '<div>' +
+                    '<div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">Repository URL</div>' +
+                    '<div style="font-family:monospace;font-size:12px;color:var(--success);word-break:break-all;background:rgba(0,0,0,0.2);padding:8px;border-radius:4px;margin-bottom:8px">' + esc(url) + '</div>' +
+                    '<button class="btn btn-sm btn-primary" style="width:100%" data-action="copy" data-value="' + esc(url) + '">Copy Repository URL</button>' +
+                    '</div>' +
+                    '</div></div>' +
                     '<div class="modal-footer"><button class="btn btn-primary" data-action="close-modal">Done</button></div>';
             }
             renderLicenses(1);
