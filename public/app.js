@@ -87,10 +87,15 @@ function handlePageClick(e) {
             licSelected.clear();
             renderLicenses(licPage);
             break;
+        case 'exit-select-mode':
+            licSelectMode = false;
+            licSelected.clear();
+            renderLicenses(licPage);
+            break;
         case 'select-license': {
             const lid = parseInt(id);
             if (licSelected.has(lid)) licSelected.delete(lid); else licSelected.add(lid);
-            renderLicenses(licPage);
+            updateSelectUI();
             break;
         }
         case 'select-all-licenses': {
@@ -100,7 +105,7 @@ function handlePageClick(e) {
             } else {
                 checkboxes.forEach(cb => licSelected.add(parseInt(cb.dataset.id)));
             }
-            renderLicenses(licPage);
+            updateSelectUI();
             break;
         }
         case 'bulk-revoke': bulkAction('revoke'); break;
@@ -299,13 +304,71 @@ function navigateTo(page) {
 // TOAST / MODAL / UTIL
 // ============================================================
 
+function cleanServerUrl(url) {
+    return url ? url.replace(/\/+$/, '') : '';
+}
+
 function toast(message, type = 'info') {
     const c = document.getElementById('toastContainer');
     const el = document.createElement('div');
     el.className = `toast ${type}`;
-    el.textContent = message;
+    const span = document.createElement('span');
+    span.textContent = message;
+    el.appendChild(span);
     c.appendChild(el);
-    setTimeout(() => el.remove(), 4000);
+    setTimeout(() => {
+        el.classList.add('removing');
+        setTimeout(() => el.remove(), 300);
+    }, 3500);
+}
+
+function confirmAction({ title, message, icon, iconType, confirmText, confirmClass, onConfirm }) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'confirm-overlay';
+        overlay.innerHTML = `
+            <div class="confirm-dialog">
+                <div class="confirm-icon ${iconType || 'warning'}">${icon || '⚠'}</div>
+                <h3>${title || 'Confirm'}</h3>
+                <p>${message || 'Are you sure?'}</p>
+                <div class="confirm-actions">
+                    <button class="btn btn-secondary confirm-cancel">Cancel</button>
+                    <button class="btn ${confirmClass || 'btn-danger'} confirm-ok">${confirmText || 'Confirm'}</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const cleanup = (result) => {
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 200);
+            resolve(result);
+        };
+
+        overlay.querySelector('.confirm-cancel').onclick = () => cleanup(false);
+        overlay.querySelector('.confirm-ok').onclick = () => { if (onConfirm) onConfirm(); cleanup(true); };
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
+    });
+}
+
+function updateSelectUI() {
+    // Update checkboxes without re-rendering
+    document.querySelectorAll('[data-action="select-license"]').forEach(cb => {
+        const id = parseInt(cb.dataset.id);
+        cb.classList.toggle('checked', licSelected.has(id));
+        cb.closest('tr')?.classList.toggle('selected', licSelected.has(id));
+    });
+    // Update select-all checkboxes
+    document.querySelectorAll('[data-action="select-all-licenses"]').forEach(cb => {
+        const total = document.querySelectorAll('[data-action="select-license"]').length;
+        cb.classList.toggle('checked', licSelected.size > 0 && licSelected.size === total);
+    });
+    // Update counter and bulk buttons
+    const counter = document.querySelector('.select-bar-info span');
+    if (counter) counter.textContent = licSelected.size + ' selected';
+    document.querySelectorAll('.select-bar-actions .btn').forEach(btn => {
+        btn.disabled = licSelected.size === 0;
+    });
 }
 
 function openModal(html) {
@@ -454,7 +517,9 @@ async function renderLicenses(page = 1) {
             return '<button class="filter-tab ' + (licFilter === t.key ? 'active' : '') + '" data-action="lic-filter" data-value="' + t.key + '">' + t.icon + ' ' + t.label + ' <span class="tab-count">' + t.count + '</span></button>';
         }).join('') + '</div>';
 
-        const selectToggle = '<button class="btn btn-sm ' + (licSelectMode ? 'btn-ghost active' : 'btn-ghost') + '" data-action="toggle-select-mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Select</button>';
+        const selectToggle = licSelectMode
+            ? '<button class="btn btn-sm btn-ghost active" data-action="exit-select-mode" title="Cancel select"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Cancel</button>'
+            : '<button class="btn btn-sm btn-ghost" data-action="toggle-select-mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Select</button>';
 
         var selectBar = '';
         if (licSelectMode) {
@@ -633,7 +698,15 @@ async function viewLicenseDetails(id) {
 
 // --- Revoke / Activate ---
 async function revokeLicense(id) {
-    if (!confirm('Revoke this license? Users will lose access immediately.')) return;
+    const ok = await confirmAction({
+        title: 'Revoke License',
+        message: 'Users will lose access immediately. This can be undone later.',
+        icon: '🚫',
+        iconType: 'warning',
+        confirmText: 'Revoke',
+        confirmClass: 'btn-warning'
+    });
+    if (!ok) return;
     try {
         await apiFetch('/api/admin/licenses/' + id, { method: 'PUT', body: JSON.stringify({ action: 'revoke' }) });
         toast('License revoked', 'success');
@@ -643,7 +716,15 @@ async function revokeLicense(id) {
 }
 
 async function activateLicense(id) {
-    if (!confirm('Activate this license?')) return;
+    const ok = await confirmAction({
+        title: 'Activate License',
+        message: 'This will restore access for this license.',
+        icon: '✓',
+        iconType: 'info',
+        confirmText: 'Activate',
+        confirmClass: 'btn-success'
+    });
+    if (!ok) return;
     try {
         await apiFetch('/api/admin/licenses/' + id, { method: 'PUT', body: JSON.stringify({ action: 'activate' }) });
         toast('License activated', 'success');
@@ -654,7 +735,15 @@ async function activateLicense(id) {
 
 // --- Soft Delete (to Trash) ---
 async function deleteLicense(id) {
-    if (!confirm('Move this license to trash?')) return;
+    const ok = await confirmAction({
+        title: 'Move to Trash',
+        message: 'This license will be moved to trash. You can restore it later.',
+        icon: '🗑️',
+        iconType: 'warning',
+        confirmText: 'Delete',
+        confirmClass: 'btn-danger'
+    });
+    if (!ok) return;
     try {
         await apiFetch('/api/admin/licenses/' + id, { method: 'DELETE' });
         toast('License moved to trash', 'success');
@@ -674,7 +763,15 @@ async function restoreLicense(id) {
 
 // --- Permanent Delete ---
 async function permanentDeleteLicense(id) {
-    if (!confirm('PERMANENTLY delete this license and ALL its data? This cannot be undone!')) return;
+    const ok = await confirmAction({
+        title: 'Delete Forever',
+        message: 'This will PERMANENTLY delete this license and ALL its data. This cannot be undone!',
+        icon: '⚠',
+        iconType: 'danger',
+        confirmText: 'Delete Forever',
+        confirmClass: 'btn-danger'
+    });
+    if (!ok) return;
     try {
         await apiFetch('/api/admin/licenses/' + id + '?force=true', { method: 'DELETE' });
         toast('License permanently deleted', 'success');
@@ -1195,7 +1292,15 @@ async function blockIPConfirm() {
 }
 
 async function unblockIP(ip) {
-    if (!confirm(`Unblock ${ip}?`)) return;
+    const ok = await confirmAction({
+        title: 'Unblock IP',
+        message: `Remove <strong>${ip}</strong> from the block list?`,
+        icon: '🔓',
+        iconType: 'info',
+        confirmText: 'Unblock',
+        confirmClass: 'btn-success'
+    });
+    if (!ok) return;
     try {
         await apiFetch('/api/admin/security/unblock-ip', { method: 'POST', body: JSON.stringify({ ip }) });
         toast('IP unblocked', 'success');

@@ -1699,3 +1699,252 @@ tr.selected:hover {
     background: var(--bg-tertiary);
     color: var(--text-muted);
 }
+
+/* ============================================================
+   TOAST NOTIFICATIONS
+   ============================================================ */
+
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    pointer-events: auto;
+    animation: toastIn 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+    backdrop-filter: blur(12px);
+    max-width: 380px;
+    min-width: 220px;
+}
+
+.toast.removing {
+    animation: toastOut 0.3s cubic-bezier(0.06, 0.71, 0.55, 1) forwards;
+}
+
+.toast::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.toast.success {
+    border-left: 3px solid var(--success);
+}
+
+.toast.success::before {
+    content: '✓';
+    color: var(--success);
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast.error {
+    border-left: 3px solid var(--danger);
+}
+
+.toast.error::before {
+    content: '✕';
+    color: var(--danger);
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast.info {
+    border-left: 3px solid var(--info);
+}
+
+.toast.info::before {
+    content: 'ℹ';
+    color: var(--info);
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast.warning {
+    border-left: 3px solid var(--warning);
+}
+
+.toast.warning::before {
+    content: '⚠';
+    color: var(--warning);
+    font-weight: 700;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateX(40px) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes toastOut {
+    from {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(40px) scale(0.96);
+    }
+}
+
+/* ============================================================
+   CUSTOM CONFIRM DIALOG
+   ============================================================ */
+
+.confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+.confirm-dialog {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: dialogIn 0.25s cubic-bezier(0.21, 1.02, 0.73, 1);
+}
+
+.confirm-dialog .confirm-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 22px;
+}
+
+.confirm-dialog .confirm-icon.danger {
+    background: var(--danger-bg);
+}
+
+.confirm-dialog .confirm-icon.warning {
+    background: var(--warning-bg);
+}
+
+.confirm-dialog .confirm-icon.info {
+    background: var(--info-bg);
+}
+
+.confirm-dialog h3 {
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.confirm-dialog p {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.confirm-dialog .confirm-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.confirm-dialog .confirm-actions .btn {
+    min-width: 100px;
+    justify-content: center;
+}
+
+@keyframes dialogIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ============================================================
+   SELECT MODE SMOOTH
+   ============================================================ */
+.select-mode-active tr {
+    transition: background var(--transition);
+}
+
+.select-bar {
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
