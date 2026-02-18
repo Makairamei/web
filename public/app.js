@@ -371,6 +371,24 @@ function updateSelectUI() {
     });
 }
 
+function copyToClipboard(text) {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+        toast('Copied!', 'success');
+    }).catch(() => {
+        // Fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        toast('Copied!', 'success');
+    });
+}
+
 function openModal(html) {
     document.getElementById('modalContent').innerHTML = html;
     document.getElementById('modalOverlay').classList.add('show');
@@ -899,14 +917,13 @@ async function createLicense() {
                     '<div style="background:var(--bg-tertiary);border-radius:var(--radius-sm);padding:16px;">' +
                     '<div style="margin-bottom:12px">' +
                     '<div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">License Key</div>' +
-                    '<div style="font-family:monospace;font-size:14px;color:var(--accent);font-weight:600;display:flex;gap:8px;align-items:center">' +
+                    '<div style="font-family:monospace;font-size:14px;color:var(--accent);font-weight:600">' +
                     esc(res.key) +
-                    '<button class="btn btn-sm btn-secondary" style="padding:2px 8px;font-size:10px" data-action="copy" data-value="' + esc(res.key) + '">COPY</button>' +
                     '</div></div>' +
                     '<div>' +
                     '<div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">Repository URL</div>' +
                     '<div style="font-family:monospace;font-size:12px;color:var(--success);word-break:break-all;background:rgba(0,0,0,0.2);padding:8px;border-radius:4px;margin-bottom:8px">' + esc(url) + '</div>' +
-                    '<button class="btn btn-sm btn-primary" style="width:100%" data-action="copy" data-value="' + esc(url) + '">Copy Repository URL</button>' +
+                    '<button class="btn btn-sm btn-primary" style="width:100%" data-action="copy" data-value="' + esc(url) + '">📋 Copy Full Repository URL</button>' +
                     '</div>' +
                     '</div></div>' +
                     '<div class="modal-footer"><button class="btn btn-primary" data-action="close-modal">Done</button></div>';
@@ -922,8 +939,19 @@ async function createLicense() {
 // --- Bulk Actions ---
 async function bulkAction(action) {
     if (licSelected.size === 0) { toast('No licenses selected', 'error'); return; }
-    var labels = { revoke: 'revoke', activate: 'activate', delete: 'move to trash', force_delete: 'permanently delete', restore: 'restore' };
-    if (!confirm((labels[action] || action) + ' ' + licSelected.size + ' license(s)?')) return;
+    var labels = { revoke: 'Revoke', activate: 'Activate', delete: 'Move to Trash', force_delete: 'Delete Forever', restore: 'Restore' };
+    var icons = { revoke: '🚫', activate: '✓', delete: '🗑️', force_delete: '⚠', restore: '↩' };
+    var types = { revoke: 'warning', activate: 'info', delete: 'warning', force_delete: 'danger', restore: 'info' };
+    var classes = { revoke: 'btn-warning', activate: 'btn-success', delete: 'btn-danger', force_delete: 'btn-danger', restore: 'btn-success' };
+    const ok = await confirmAction({
+        title: (labels[action] || action) + ' ' + licSelected.size + ' License(s)',
+        message: 'This will ' + (labels[action] || action).toLowerCase() + ' all ' + licSelected.size + ' selected license(s).',
+        icon: icons[action] || '⚠',
+        iconType: types[action] || 'warning',
+        confirmText: labels[action] || action,
+        confirmClass: classes[action] || 'btn-danger'
+    });
+    if (!ok) return;
 
     try {
         if (action === 'restore') {
