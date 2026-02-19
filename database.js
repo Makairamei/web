@@ -139,11 +139,15 @@ async function initDatabase() {
     db.run(`CREATE TABLE IF NOT EXISTS access_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         license_key TEXT DEFAULT '',
+        device_id TEXT DEFAULT '',
         action TEXT NOT NULL,
         ip_address TEXT DEFAULT '',
         details TEXT DEFAULT '',
         created_at DATETIME DEFAULT (datetime('now'))
     )`);
+
+    // Migration: add device_id to access_logs if missing (for existing databases)
+    try { db.run(`ALTER TABLE access_logs ADD COLUMN device_id TEXT DEFAULT ''`); } catch (_) { }
 
     db.run(`CREATE TABLE IF NOT EXISTS failed_logins (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -417,11 +421,14 @@ function getPluginUsagePaginated(page = 1, limit = 50, search = '') {
     let where = '';
     let params = [];
     if (search) {
-        where = 'WHERE plugin_name LIKE ? OR license_key LIKE ? OR action LIKE ?';
-        params = [`%${search}%`, `%${search}%`, `%${search}%`];
+        where = 'WHERE (pu.plugin_name LIKE ? OR pu.license_key LIKE ? OR pu.action LIKE ? OR d.device_name LIKE ?)';
+        params = [`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`];
     }
-    const total = get(`SELECT COUNT(*) as c FROM plugin_usage ${where}`, params);
-    const rows = all(`SELECT * FROM plugin_usage ${where} ORDER BY used_at DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
+    const total = get(`SELECT COUNT(*) as c FROM plugin_usage pu LEFT JOIN devices d ON pu.license_key = d.license_key AND pu.device_id = d.device_id ${where}`, params);
+    const rows = all(`SELECT pu.*, d.device_name, l.name as license_name FROM plugin_usage pu
+        LEFT JOIN devices d ON pu.license_key = d.license_key AND pu.device_id = d.device_id
+        LEFT JOIN licenses l ON pu.license_key = l.license_key
+        ${where} ORDER BY pu.used_at DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
     return { logs: rows, total: total?.c || 0, page, limit };
 }
 
@@ -438,11 +445,14 @@ function getPlaybackLogsPaginated(page = 1, limit = 50, search = '') {
     let where = '';
     let params = [];
     if (search) {
-        where = 'WHERE video_title LIKE ? OR plugin_name LIKE ? OR source_provider LIKE ? OR license_key LIKE ?';
-        params = [`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`];
+        where = 'WHERE (pl.video_title LIKE ? OR pl.plugin_name LIKE ? OR pl.source_provider LIKE ? OR pl.license_key LIKE ? OR d.device_name LIKE ?)';
+        params = [`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`];
     }
-    const total = get(`SELECT COUNT(*) as c FROM playback_logs ${where}`, params);
-    const rows = all(`SELECT * FROM playback_logs ${where} ORDER BY played_at DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
+    const total = get(`SELECT COUNT(*) as c FROM playback_logs pl LEFT JOIN devices d ON pl.license_key = d.license_key AND pl.device_id = d.device_id ${where}`, params);
+    const rows = all(`SELECT pl.*, d.device_name, l.name as license_name FROM playback_logs pl
+        LEFT JOIN devices d ON pl.license_key = d.license_key AND pl.device_id = d.device_id
+        LEFT JOIN licenses l ON pl.license_key = l.license_key
+        ${where} ORDER BY pl.played_at DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
     return { logs: rows, total: total?.c || 0, page, limit };
 }
 
@@ -450,8 +460,8 @@ function getPlaybackLogsPaginated(page = 1, limit = 50, search = '') {
 // ACCESS LOGS
 // ============================================================
 
-function logAccess(key, action, ip = '', details = '') {
-    run('INSERT INTO access_logs (license_key, action, ip_address, details) VALUES (?, ?, ?, ?)', [key || '', action, ip, details]);
+function logAccess(key, action, ip = '', details = '', deviceId = '') {
+    run('INSERT INTO access_logs (license_key, device_id, action, ip_address, details) VALUES (?, ?, ?, ?, ?)', [key || '', deviceId || '', action, ip, details]);
 }
 
 function getAccessLogsPaginated(page = 1, limit = 50, search = '', action = '') {
@@ -459,16 +469,19 @@ function getAccessLogsPaginated(page = 1, limit = 50, search = '', action = '') 
     let whereClauses = [];
     let params = [];
     if (search) {
-        whereClauses.push('(license_key LIKE ? OR details LIKE ? OR ip_address LIKE ?)');
-        params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+        whereClauses.push('(al.license_key LIKE ? OR al.details LIKE ? OR al.ip_address LIKE ? OR d.device_name LIKE ?)');
+        params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
     if (action) {
-        whereClauses.push('action = ?');
+        whereClauses.push('al.action = ?');
         params.push(action);
     }
     const where = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
-    const total = get(`SELECT COUNT(*) as c FROM access_logs ${where}`, params);
-    const rows = all(`SELECT * FROM access_logs ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
+    const total = get(`SELECT COUNT(*) as c FROM access_logs al LEFT JOIN devices d ON al.license_key = d.license_key AND al.device_id = d.device_id ${where}`, params);
+    const rows = all(`SELECT al.*, d.device_name, l.name as license_name FROM access_logs al
+        LEFT JOIN devices d ON al.license_key = d.license_key AND al.device_id = d.device_id
+        LEFT JOIN licenses l ON al.license_key = l.license_key
+        ${where} ORDER BY al.created_at DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
     return { logs: rows, total: total?.c || 0, page, limit };
 }
 

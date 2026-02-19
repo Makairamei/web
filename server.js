@@ -185,7 +185,7 @@ app.post('/api/validate', rateLimit(60000, 30), (req, res) => {
 
         // Create IP session for fast check-ip path
         createIPSession(ip, key);
-        db.logAccess(key, 'VALIDATE_OK', ip, `device: ${deviceId}`);
+        db.logAccess(key, 'VALIDATE_OK', ip, `device: ${deviceId}`, deviceId);
 
         res.json({
             status: 'active',
@@ -260,7 +260,7 @@ app.get('/api/check-ip', rateLimit(60000, 120), (req, res) => {
             if (result.valid) {
                 createIPSession(ip, keyParam);
                 session = getIPSession(ip);
-                db.logAccess(keyParam, 'VALIDATE_OK', ip, `plugin: ${pluginName}`);
+                db.logAccess(keyParam, 'VALIDATE_OK', ip, `plugin: ${pluginName}`, deviceId);
             } else {
                 const messages = {
                     not_found: 'License key not found',
@@ -826,9 +826,11 @@ app.get('/api/admin/activity-feed', authMiddleware, (req, res) => {
 
         const pluginActivity = db.all(
             `SELECT pu.license_key, pu.device_id, pu.plugin_name, pu.action, pu.ip_address, pu.used_at,
-                    l.name as license_name
+                    l.name as license_name,
+                    COALESCE(d.device_name, '') as device_name
              FROM plugin_usage pu
              LEFT JOIN licenses l ON pu.license_key = l.license_key
+             LEFT JOIN devices d ON pu.license_key = d.license_key AND pu.device_id = d.device_id
              WHERE pu.used_at > datetime('now', '-${minutes} minutes')
              ORDER BY pu.used_at DESC LIMIT ?`, [limit]
         );
@@ -836,9 +838,11 @@ app.get('/api/admin/activity-feed', authMiddleware, (req, res) => {
         const playbackActivity = db.all(
             `SELECT pl.license_key, pl.device_id, pl.plugin_name, pl.video_title, pl.source_provider, 
                     pl.ip_address, pl.played_at,
-                    l.name as license_name
+                    l.name as license_name,
+                    COALESCE(d.device_name, '') as device_name
              FROM playback_logs pl
              LEFT JOIN licenses l ON pl.license_key = l.license_key
+             LEFT JOIN devices d ON pl.license_key = d.license_key AND pl.device_id = d.device_id
              WHERE pl.played_at > datetime('now', '-${minutes} minutes')
              ORDER BY pl.played_at DESC LIMIT ?`, [limit]
         );

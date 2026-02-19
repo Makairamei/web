@@ -1073,6 +1073,11 @@ async function renderActivityFeed() {
                     ? '<span style="color:var(--text-primary);font-weight:500">' + esc(item.video_title || '') + '</span> <span style="color:var(--text-muted)">via</span> ' + esc(item.plugin_name)
                     : '<span style="color:var(--text-primary);font-weight:500">' + esc(item.plugin_name) + '</span>';
                 const source = isPlayback && item.source_provider === 'DOWNLOAD' ? ' <span class="badge badge-expired">DL</span>' : '';
+                // Device label: prefer device_name, fallback to shortened device_id
+                const deviceLabel = (item.device_name && item.device_name.trim())
+                    ? item.device_name
+                    : (item.device_id ? item.device_id.substring(0, 14) : '');
+                const deviceBit = deviceLabel ? ' · 📱 <span style="color:var(--text-secondary)">' + esc(deviceLabel) + '</span>' : '';
 
                 return '<div class="activity-item">' +
                     '<div class="activity-icon">' + icon + '</div>' +
@@ -1080,6 +1085,7 @@ async function renderActivityFeed() {
                     '<div class="activity-main">' + actionBadge + ' ' + detail + source + '</div>' +
                     '<div class="activity-meta">' +
                     '<span class="license-key" data-action="copy" data-value="' + esc(item.license_key) + '" title="Click to copy">' + esc(item.license_name || item.license_key?.substring(0, 12)) + '</span>' +
+                    deviceBit +
                     ' · ' + esc(item.ip_address) +
                     ' · ' + timeAgo(item.timestamp) +
                     '</div></div></div>';
@@ -1204,14 +1210,14 @@ async function renderPluginUsage(page = 1) {
         let rows = data.logs?.length ? data.logs.map(l => `<tr>
             <td>${esc(l.plugin_name)}</td>
             <td><span class="badge badge-info">${esc(l.action)}</span></td>
-            <td><span class="license-key" data-action="copy" data-value="${esc(l.license_key)}">${esc(l.license_key?.substring(0, 15))}</span></td>
-            <td>${esc(l.device_id?.substring(0, 12) || '-')}</td>
+            <td><span class="license-key" data-action="copy" data-value="${esc(l.license_key)}">${esc(l.license_name || l.license_key?.substring(0, 15))}</span></td>
+            <td title="${esc(l.device_id)}">${esc(l.device_name || l.device_id?.substring(0, 16) || '-')}</td>
             <td>${esc(l.ip_address)}</td>
             <td>${timeAgo(l.used_at)}</td>
         </tr>`).join('') : '';
 
         c.innerHTML = `<div class="table-container">
-            <div class="table-header"><h3>Plugin Activity (${data.total})</h3><div class="table-actions">${searchBox('puSearchInput', 'Search plugins...', 'pu-search')}</div></div>
+            <div class="table-header"><h3>Plugin Activity (${data.total})</h3><div class="table-actions">${searchBox('puSearchInput', 'Search plugins/devices...', 'pu-search')}</div></div>
             <table><thead><tr><th>Plugin</th><th>Action</th><th>License</th><th>Device</th><th>IP</th><th>Time</th></tr></thead>
             <tbody>${rows || '<tr><td colspan="6"><div class="empty-state"><p>No plugin activity</p></div></td></tr>'}</tbody></table>
             <div class="table-footer"><span>Page ${page} of ${tp || 1}</span>${pagBtns(page, tp, 'pu-page')}</div>
@@ -1235,15 +1241,16 @@ async function renderPlaybackLogs(page = 1) {
             <td title="${esc(l.video_title)}">${esc(l.video_title?.substring(0, 40))}</td>
             <td>${esc(l.plugin_name)}</td>
             <td>${esc(l.source_provider || '-')}</td>
-            <td><span class="license-key" data-action="copy" data-value="${esc(l.license_key)}">${esc(l.license_key?.substring(0, 15))}</span></td>
+            <td><span class="license-key" data-action="copy" data-value="${esc(l.license_key)}">${esc(l.license_name || l.license_key?.substring(0, 15))}</span></td>
+            <td title="${esc(l.device_id)}">${esc(l.device_name || l.device_id?.substring(0, 16) || '-')}</td>
             <td>${esc(l.ip_address)}</td>
             <td>${timeAgo(l.played_at)}</td>
         </tr>`).join('') : '';
 
         c.innerHTML = `<div class="table-container">
-            <div class="table-header"><h3>Playback History (${data.total})</h3><div class="table-actions">${searchBox('pbSearchInput', 'Search videos...', 'pb-search')}</div></div>
-            <table><thead><tr><th>Video Title</th><th>Plugin</th><th>Source</th><th>License</th><th>IP</th><th>Time</th></tr></thead>
-            <tbody>${rows || '<tr><td colspan="6"><div class="empty-state"><p>No playback logs</p></div></td></tr>'}</tbody></table>
+            <div class="table-header"><h3>Playback History (${data.total})</h3><div class="table-actions">${searchBox('pbSearchInput', 'Search videos/devices...', 'pb-search')}</div></div>
+            <table><thead><tr><th>Video Title</th><th>Plugin</th><th>Source</th><th>License</th><th>Device</th><th>IP</th><th>Time</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="7"><div class="empty-state"><p>No playback logs</p></div></td></tr>'}</tbody></table>
             <div class="table-footer"><span>Page ${page} of ${tp || 1}</span>${pagBtns(page, tp, 'pb-page')}</div>
         </div>`;
     } catch (e) { c.innerHTML = '<div class="empty-state"><p>Failed to load playback logs</p></div>'; }
@@ -1263,16 +1270,17 @@ async function renderAccessLogs(page = 1) {
         const tp = Math.ceil(data.total / data.limit);
         let rows = data.logs?.length ? data.logs.map(l => `<tr>
             <td><span class="badge badge-info">${esc(l.action)}</span></td>
-            <td>${l.license_key ? `<span class="license-key" data-action="copy" data-value="${esc(l.license_key)}">${esc(l.license_key?.substring(0, 15))}</span>` : '-'}</td>
+            <td>${l.license_key ? `<span class="license-key" data-action="copy" data-value="${esc(l.license_key)}">${esc(l.license_name || l.license_key?.substring(0, 15))}</span>` : '-'}</td>
+            <td title="${esc(l.device_id)}">${esc(l.device_name || l.device_id?.substring(0, 16) || '-')}</td>
             <td>${esc(l.ip_address)}</td>
             <td title="${esc(l.details)}">${esc(l.details?.substring(0, 60) || '-')}</td>
             <td>${timeAgo(l.created_at)}</td>
         </tr>`).join('') : '';
 
         c.innerHTML = `<div class="table-container">
-            <div class="table-header"><h3>Access Logs (${data.total})</h3><div class="table-actions">${searchBox('alSearchInput', 'Search logs...', 'al-search')}</div></div>
-            <table><thead><tr><th>Action</th><th>License</th><th>IP</th><th>Details</th><th>Time</th></tr></thead>
-            <tbody>${rows || '<tr><td colspan="5"><div class="empty-state"><p>No logs</p></div></td></tr>'}</tbody></table>
+            <div class="table-header"><h3>Access Logs (${data.total})</h3><div class="table-actions">${searchBox('alSearchInput', 'Search logs/devices...', 'al-search')}</div></div>
+            <table><thead><tr><th>Action</th><th>License</th><th>Device</th><th>IP</th><th>Details</th><th>Time</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="6"><div class="empty-state"><p>No logs</p></div></td></tr>'}</tbody></table>
             <div class="table-footer"><span>Page ${page} of ${tp || 1}</span>${pagBtns(page, tp, 'al-page')}</div>
         </div>`;
     } catch (e) { c.innerHTML = '<div class="empty-state"><p>Failed to load logs</p></div>'; }
